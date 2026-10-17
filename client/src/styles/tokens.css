@@ -1,0 +1,32 @@
+:root {
+  /* Colour: indigo-dyed cloth, turmeric, madder */
+  --indigo: #1b2559;
+  --indigo-deep: #121a42;
+  --mist: #eef1f8;
+  --paper: #fafbfe;
+  --turmeric: #f2b632;
+  --madder: #8e2c25;
+  --ink: #161a33;
+  --ink-soft: #5b6285;
+  --line: #d9deee;
+
+  /* Type */
+  --font-display: "Bricolage Grotesque", system-ui, sans-serif;
+  --font-body: "DM Sans", system-ui, sans-serif;
+
+  /* Type scale (1.25) */
+  --step--1: 0.8rem;
+  --step-0: 1rem;
+  --step-1: 1.25rem;
+  --step-2: 1.56rem;
+  --step-3: 1.95rem;
+  --step-4: clamp(2.4rem, 4vw + 1rem, 3.8rem);
+  --step-5: clamp(3rem, 6vw + 1rem, 5.6rem);
+
+  /* Space + shape */
+  --s1: 0.5rem; --s2: 1rem; --s3: 1.5rem; --s4: 2.5rem; --s5: 4.5rem;
+  --radius-s: 4px;
+  --radius-m: 10px;
+  --radius-pill: 999px;
+  --shadow-lift: 0 18px 40px -18px rgba(18, 26, 66, 0.45);
+}
