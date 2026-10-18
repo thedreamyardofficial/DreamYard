@@ -1,19 +1,18 @@
 import Order from "../models/Order.js";
 import Product from "../models/Product.js";
+import User from "../models/User.js";
 
 export async function createOrder(req, res) {
-  const { customer: c, items } = req.body || {};
-  if (!c || !Array.isArray(items) || items.length === 0) {
+  const { addressId, items } = req.body || {};
+  if (!addressId || !Array.isArray(items) || items.length === 0) {
     res.status(400);
-    throw new Error("Add at least one item and your delivery details.");
+    throw new Error("Select a delivery address and add at least one item.");
   }
-  const bad =
-    !c.name?.trim() || !/^\S+@\S+\.\S+$/.test(c.email || "") ||
-    !/^[0-9+\-\s]{8,15}$/.test(c.phone || "") || !c.address?.trim() ||
-    !c.city?.trim() || !/^[0-9]{6}$/.test(c.pincode || "");
-  if (bad) {
+  const account = await User.findById(req.user.id);
+  const address = account?.addresses.id(addressId);
+  if (!account || !address) {
     res.status(400);
-    throw new Error("Check your delivery details: a valid email, 8-15 digit phone and 6-digit pincode are required.");
+    throw new Error("Choose one of your saved delivery addresses.");
   }
 
   // Never trust prices from the client: rebuild the order from the database.
@@ -46,6 +45,10 @@ export async function createOrder(req, res) {
   }
 
   const total = orderItems.reduce((sum, i) => sum + i.price * i.qty, 0);
-  const order = await Order.create({ customer: c, items: orderItems, total });
+  const customer = address.toObject();
+  delete customer._id;
+  delete customer.createdAt;
+  delete customer.updatedAt;
+  const order = await Order.create({ user: account._id, customer, items: orderItems, total });
   res.status(201).json({ _id: order._id, total: order.total, customer: { name: order.customer.name } });
 }

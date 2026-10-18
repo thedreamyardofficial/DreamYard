@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { useSite } from "../context/SiteContext.jsx";
 
 export default function Footer() {
@@ -10,6 +11,7 @@ export default function Footer() {
         {(settings.contactEmail || settings.contactPhone) && (
           <p>{[settings.contactEmail, settings.contactPhone].filter(Boolean).join("  ·  ")}</p>
         )}
+        <Link className="footer__privacy" to="/privacy-policy">Privacy Policy</Link>
         <p className="footer__fine">© {new Date().getFullYear()} {settings.storeName}</p>
       </div>
     </footer>

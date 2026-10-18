@@ -18,7 +18,7 @@ export function errorHandler(err, req, res, _next) {
     message = "That ID isn't valid.";
   } else if (err.code === 11000) {
     status = 409;
-    message = "That name is already in use.";
+    message = "An account or record with that value already exists.";
   } else if (err.name === "MulterError") {
     status = 400;
     message = err.code === "LIMIT_FILE_SIZE" ? "Images must be 5 MB or smaller." : err.message;

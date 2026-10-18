@@ -2,6 +2,7 @@ import { Router } from "express";
 import rateLimit from "express-rate-limit";
 import { createOrder } from "../controllers/orderController.js";
 import { asyncHandler } from "../middleware/error.js";
+import { requireUser } from "../middleware/userAuth.js";
 
 const router = Router();
 const orderLimiter = rateLimit({
@@ -12,5 +13,5 @@ const orderLimiter = rateLimit({
   message: { message: "Too many orders from this network. Try again in a few minutes." },
 });
 
-router.post("/", orderLimiter, asyncHandler(createOrder));
+router.post("/", requireUser, orderLimiter, asyncHandler(createOrder));
 export default router;

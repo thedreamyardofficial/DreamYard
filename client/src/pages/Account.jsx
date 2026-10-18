@@ -1,0 +1,197 @@
+import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import { api, rupees } from "../api/client.js";
+import { useCart } from "../context/CartContext.jsx";
+import { useAuth } from "../context/AuthContext.jsx";
+
+const EMPTY_ADDRESS = { name: "", email: "", phone: "", address: "", city: "", pincode: "" };
+const ADDRESS_FIELDS = [
+  ["name", "Recipient name", "text", "name"],
+  ["email", "Recipient email", "email", "email"],
+  ["phone", "Phone number", "tel", "tel"],
+  ["address", "Street address", "text", "street-address"],
+  ["city", "City", "text", "address-level2"],
+  ["pincode", "Pincode", "text", "postal-code"],
+];
+
+export default function Account() {
+  const { user, token, loading, openAuth, signOut, addAddress, removeAddress } = useAuth();
+  const { flushCart } = useCart();
+  const [form, setForm] = useState(EMPTY_ADDRESS);
+  const [showAddressForm, setShowAddressForm] = useState(false);
+  const [orders, setOrders] = useState([]);
+  const [ordersError, setOrdersError] = useState("");
+  const [avatarFailed, setAvatarFailed] = useState(false);
+  const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [signingOut, setSigningOut] = useState(false);
+  const [signOutError, setSignOutError] = useState("");
+
+  useEffect(() => {
+    if (!user || !token) return undefined;
+    let active = true;
+    api.orders(token)
+      .then(({ orders: history }) => { if (active) setOrders(history); })
+      .catch((err) => { if (active) setOrdersError(err.message); });
+    return () => { active = false; };
+  }, [user?._id, token]);
+
+  useEffect(() => setAvatarFailed(false), [user?.googleAvatarUrl]);
+
+  if (loading) return <p className="empty">Loading your account…</p>;
+  if (!user) {
+    return (
+      <section className="container section account-gate">
+        <h1 className="page-title">Your account</h1>
+        <p>Sign in to manage your delivery addresses and see your orders.</p>
+        <button className="btn btn--solid" onClick={() => openAuth("login")}>Sign in</button>
+      </section>
+    );
+  }
+
+  const update = (key) => (event) => setForm((current) => ({ ...current, [key]: event.target.value }));
+  const submitAddress = async (event) => {
+    event.preventDefault();
+    setBusy(true);
+    setError("");
+    try {
+      await addAddress(form);
+      setForm(EMPTY_ADDRESS);
+      setShowAddressForm(false);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const deleteAddress = async (addressId) => {
+    setError("");
+    try {
+      await removeAddress(addressId);
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  const handleSignOut = async () => {
+    setSigningOut(true);
+    setSignOutError("");
+    try {
+      await flushCart();
+      signOut();
+    } catch {
+      setSignOutError("Your bag could not be synced. Please try signing out again.");
+    } finally {
+      setSigningOut(false);
+    }
+  };
+
+  return (
+    <div className="container section account">
+      <header className="account__header">
+        <div className="account__profile">
+          <span className="account__avatar" role="img" aria-label={user.googleAvatarUrl && !avatarFailed ? "Google profile photo" : "Default profile avatar"}>
+            {user.googleAvatarUrl && !avatarFailed ? (
+              <img src={user.googleAvatarUrl} alt="" referrerPolicy="no-referrer" onError={() => setAvatarFailed(true)} />
+            ) : (
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="12" cy="8" r="4" />
+                <path d="M4 21a8 8 0 0 1 16 0" />
+              </svg>
+            )}
+          </span>
+          <div>
+            <p className="account__eyebrow">Your DreamYard account</p>
+            <h1 className="page-title">Hello, {user.name}</h1>
+            <p className="account__email">{user.email}</p>
+          </div>
+        </div>
+        <button className="btn account__signout" onClick={handleSignOut} disabled={signingOut}>
+          {signingOut ? "Saving bag…" : "Sign out"}
+        </button>
+      </header>
+      {signOutError && <p className="notice notice--error" role="alert">{signOutError}</p>}
+
+      <section className="account__section">
+        <div className="account__section-head">
+          <div><h2>Delivery addresses</h2><p>Save up to three recipients and destinations.</p></div>
+          <span>{user.addresses.length} / 3</span>
+        </div>
+        {user.addresses.length > 0 && (
+          <ul className="address-list">
+            {user.addresses.map((address) => (
+              <li className="address-item" key={address._id}>
+                <div>
+                  <strong>{address.name}</strong>
+                  <p>{address.email} · {address.phone}</p>
+                  <p>{address.address}, {address.city} {address.pincode}</p>
+                </div>
+                <button className="link-btn" onClick={() => deleteAddress(address._id)}>Remove</button>
+              </li>
+            ))}
+          </ul>
+        )}
+        {user.addresses.length < 3 && !showAddressForm && (
+          <button
+            className="address-add"
+            type="button"
+            onClick={() => setShowAddressForm(true)}
+            aria-label="Add delivery address"
+          >
+            <span className="address-add__plus" aria-hidden="true">+</span>
+            <span>Add address</span>
+          </button>
+        )}
+        {user.addresses.length < 3 && showAddressForm && (
+          <form className="address-form" onSubmit={submitAddress}>
+            <h3>{user.addresses.length ? "Add another address" : "Add your first address"}</h3>
+            <div className="address-form__grid">
+              {ADDRESS_FIELDS.map(([key, label, type, autocomplete]) => (
+                <label className={`label address-form__${key}`} key={key}>{label}
+                  <input
+                    className="field"
+                    type={type}
+                    autoComplete={autocomplete}
+                    maxLength={key === "address" ? 300 : key === "pincode" ? 6 : 100}
+                    pattern={key === "pincode" ? "[0-9]{6}" : undefined}
+                    required
+                    value={form[key]}
+                    onChange={update(key)}
+                  />
+                </label>
+              ))}
+            </div>
+            {error && <p className="notice notice--error" role="alert">{error}</p>}
+            <div className="address-form__actions">
+              <button className="btn btn--solid" disabled={busy}>{busy ? "Saving…" : "Save address"}</button>
+              <button className="btn account__signout" type="button" disabled={busy} onClick={() => { setShowAddressForm(false); setError(""); }}>Cancel</button>
+            </div>
+          </form>
+        )}
+        {error && user.addresses.length === 3 && <p className="notice notice--error" role="alert">{error}</p>}
+      </section>
+
+      <section className="account__section">
+        <div className="account__section-head"><div><h2>Order history</h2><p>Your recent purchases.</p></div></div>
+        {ordersError && <p className="notice notice--error">{ordersError}</p>}
+        {!ordersError && orders.length === 0 ? (
+          <p className="account__empty">No orders yet. <Link className="link-btn" to="/shop">Explore the shop</Link></p>
+        ) : (
+          <ul className="order-list">
+            {orders.map((order) => (
+              <li className="order-item" key={order._id}>
+                <div className="order-item__top">
+                  <strong>Order #{order._id.slice(-6)}</strong>
+                  <span>{new Date(order.createdAt).toLocaleDateString()}</span>
+                </div>
+                <p>{order.items.map((item) => `${item.name} (${item.size}) × ${item.qty}`).join(", ")}</p>
+                <div className="order-item__bottom"><span>{order.status}</span><strong>{rupees(order.total)}</strong></div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+    </div>
+  );
+}

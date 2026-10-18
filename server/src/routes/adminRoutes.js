@@ -9,6 +9,7 @@ import * as categories from "../controllers/admin/categoryAdmin.js";
 import * as orders from "../controllers/admin/orderAdmin.js";
 import * as settings from "../controllers/admin/settingsAdmin.js";
 import * as dashboard from "../controllers/admin/dashboardAdmin.js";
+import * as users from "../controllers/admin/userAdmin.js";
 
 const router = Router();
 
@@ -40,6 +41,9 @@ router.delete("/categories/:id", h(categories.remove));
 router.get("/orders", h(orders.list));
 router.patch("/orders/:id/status", h(orders.setStatus));
 router.delete("/orders/:id", h(orders.remove));
+
+router.get("/users", h(users.list));
+router.delete("/users/:id", h(users.remove));
 
 router.put("/settings", h(settings.update));
 

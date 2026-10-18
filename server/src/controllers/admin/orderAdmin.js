@@ -22,7 +22,15 @@ export async function setStatus(req, res) {
 }
 
 export async function remove(req, res) {
-  const order = await Order.findByIdAndDelete(req.params.id);
+  const order = await Order.findById(req.params.id);
   if (!order) { res.status(404); throw new Error("Order not found."); }
+
+  if (order.status !== "cancelled") {
+    await Promise.all(order.items.map((item) =>
+      Product.updateOne({ _id: item.product }, { $inc: { stock: item.qty } })
+    ));
+  }
+
+  await Order.findByIdAndDelete(order._id);
   res.json({ ok: true });
 }

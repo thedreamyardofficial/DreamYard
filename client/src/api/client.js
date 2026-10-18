@@ -1,10 +1,18 @@
 const RAW_API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 export const API_BASE = `${RAW_API_URL.replace(/\/$/, "")}/api`;
 
-async function request(path, options) {
+async function request(path, options = {}, token) {
   let res;
   try {
-    res = await fetch(`${API_BASE}${path}`, { headers: { "Content-Type": "application/json" }, ...options });
+    const { headers = {}, ...fetchOptions } = options;
+    res = await fetch(`${API_BASE}${path}`, {
+      ...fetchOptions,
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...headers,
+      },
+    });
   } catch {
     throw new Error("Can't reach the store server. Check that it is running.");
   }
@@ -21,7 +29,16 @@ export const api = {
   product: (slug) => request(`/products/${slug}`),
   categories: () => request("/categories"),
   settings: () => request("/settings"),
-  createOrder: (body) => request("/orders", { method: "POST", body: JSON.stringify(body) }),
+  register: (body) => request("/auth/register", { method: "POST", body: JSON.stringify(body) }),
+  login: (body) => request("/auth/login", { method: "POST", body: JSON.stringify(body) }),
+  googleLogin: (credential) => request("/auth/google", { method: "POST", body: JSON.stringify({ credential }) }),
+  me: (token) => request("/auth/me", {}, token),
+  addAddress: (token, body) => request("/auth/addresses", { method: "POST", body: JSON.stringify(body) }, token),
+  removeAddress: (token, addressId) => request(`/auth/addresses/${addressId}`, { method: "DELETE" }, token),
+  getCart: (token) => request("/auth/cart", {}, token),
+  saveCart: (token, items) => request("/auth/cart", { method: "PUT", body: JSON.stringify({ items }) }, token),
+  orders: (token) => request("/auth/orders", {}, token),
+  createOrder: (body, token) => request("/orders", { method: "POST", body: JSON.stringify(body) }, token),
 };
 
 export const rupees = (n) => `₹${Number(n).toLocaleString("en-IN")}`;

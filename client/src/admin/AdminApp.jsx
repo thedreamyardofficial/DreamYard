@@ -9,6 +9,7 @@ import ProductsAdmin from "./pages/ProductsAdmin.jsx";
 import SectionsAdmin from "./pages/SectionsAdmin.jsx";
 import OrdersAdmin from "./pages/OrdersAdmin.jsx";
 import SettingsAdmin from "./pages/SettingsAdmin.jsx";
+import UsersAdmin from "./pages/UsersAdmin.jsx";
 
 function RequireAdmin() {
   return tokenStore.get() ? <AdminLayout /> : <Navigate to={`${ADMIN_BASE}/login`} replace />;
@@ -33,6 +34,7 @@ export default function AdminApp() {
           <Route path="products" element={<ProductsAdmin />} />
           <Route path="sections" element={<SectionsAdmin />} />
           <Route path="orders" element={<OrdersAdmin />} />
+          <Route path="users" element={<UsersAdmin />} />
           <Route path="settings" element={<SettingsAdmin />} />
         </Route>
         <Route path="*" element={<Navigate to={ADMIN_BASE} replace />} />

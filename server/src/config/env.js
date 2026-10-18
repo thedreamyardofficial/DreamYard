@@ -20,6 +20,7 @@ export const env = {
   isProd: process.env.NODE_ENV === "production",
   mongoUri: process.env.MONGO_URI,
   jwtSecret: process.env.JWT_SECRET,
+  googleClientId: process.env.GOOGLE_CLIENT_ID || "",
   adminEmail: process.env.ADMIN_EMAIL,
   adminPassword: process.env.ADMIN_PASSWORD,
   cloudinaryCloudName: process.env.CLOUDINARY_CLOUD_NAME,

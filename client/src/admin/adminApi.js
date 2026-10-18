@@ -54,5 +54,7 @@ export const adminApi = {
   orders: () => request("/orders"),
   setOrderStatus: (id, status) => request(`/orders/${id}/status`, { method: "PATCH", body: { status } }),
   deleteOrder: (id) => request(`/orders/${id}`, { method: "DELETE" }),
+  users: () => request("/users"),
+  deleteUser: (id) => request(`/users/${id}`, { method: "DELETE" }),
   saveSettings: (body) => request("/settings", { method: "PUT", body }),
 };

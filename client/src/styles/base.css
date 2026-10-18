@@ -23,6 +23,9 @@ ul { list-style: none; margin: 0; padding: 0; }
 .container { width: min(1180px, 100% - 2.5rem); margin-inline: auto; }
 .section { padding-block: var(--s5); }
 
+.public-layout { display: flex; min-height: 100vh; flex-direction: column; }
+.public-layout > main { flex: 1; }
+
 :focus-visible { outline: 3px solid var(--turmeric); outline-offset: 3px; }
 
 @media (prefers-reduced-motion: reduce) {

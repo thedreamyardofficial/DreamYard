@@ -9,6 +9,7 @@ import { uploadsDir } from "./middleware/upload.js";
 import productRoutes from "./routes/productRoutes.js";
 import storeRoutes from "./routes/storeRoutes.js";
 import orderRoutes from "./routes/orderRoutes.js";
+import authRoutes from "./routes/authRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
 import { notFound, errorHandler } from "./middleware/error.js";
 
@@ -34,6 +35,7 @@ app.get("/api/health", (_req, res) => res.json({ ok: true, uptime: process.uptim
 app.use("/api/products", productRoutes);
 app.use("/api", storeRoutes);
 app.use("/api/orders", orderRoutes);
+app.use("/api/auth", authRoutes);
 app.use("/api/admin", adminRoutes);
 
 app.use(notFound);

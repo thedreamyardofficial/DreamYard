@@ -59,14 +59,85 @@
 .summary { padding: var(--s3); background: var(--mist); border-radius: var(--radius-m); display: grid; gap: var(--s2); position: sticky; top: 90px; }
 .summary h2 { font-size: var(--step-2); }
 .summary li, .summary__total { display: flex; justify-content: space-between; gap: var(--s2); padding-block: 0.4rem; }
+.summary__item { align-items: flex-start; }
+.summary__item-info { display: grid; min-width: 0; gap: 0.35rem; }
+.summary__controls { display: flex; align-items: center; gap: 0.5rem; }
+.summary__controls button:not(.link-btn) { display: grid; place-items: center; width: 28px; height: 28px; border: 1px solid var(--line); border-radius: 50%; background: #fff; color: var(--ink); }
+.summary__controls .link-btn { margin-left: 0.25rem; font-size: 0.85rem; }
+.summary__qty { min-width: 1.25rem; text-align: center; }
+.summary__empty { color: var(--ink-soft); }
 .summary__total { border-top: 1.5px solid var(--indigo); font-size: var(--step-1); }
 .summary__note { color: var(--ink-soft); font-size: 0.9rem; }
 .confirm { display: grid; gap: var(--s3); justify-items: start; max-width: 600px; }
 .confirm h1 { font-size: var(--step-4); }
+
+/* ---------- Privacy policy ---------- */
+.privacy { max-width: 850px; }
+.privacy__header { padding-bottom: var(--s3); border-bottom: 1px solid var(--line); }
+.privacy__header .page-title { margin-bottom: 0.5rem; }
+.privacy__header > p:last-child { color: var(--ink-soft); }
+.privacy__content { display: grid; gap: var(--s3); padding-top: var(--s3); }
+.privacy__content section { display: grid; gap: 0.65rem; }
+.privacy__content h2 { font-size: var(--step-1); }
+.privacy__content ul { display: grid; gap: 0.5rem; padding-left: 1.25rem; list-style: disc; }
+.privacy__content a { color: var(--indigo); text-decoration: underline; text-underline-offset: 3px; }
+
+/* ---------- Customer account ---------- */
+.account { max-width: 900px; }
+.account__header { display: flex; justify-content: space-between; align-items: center; gap: var(--s3); padding-bottom: var(--s3); border-bottom: 1px solid var(--line); }
+.account__profile { display: flex; align-items: center; gap: var(--s2); min-width: 0; }
+.account__avatar { display: grid; place-items: center; width: 56px; height: 56px; flex: 0 0 auto; overflow: hidden; border: 1px solid var(--line); border-radius: 50%; background: var(--mist); color: var(--ink-soft); }
+.account__avatar img { width: 100%; height: 100%; object-fit: cover; }
+.account__avatar svg { width: 62%; height: 62%; fill: currentColor; }
+.account__header .page-title { margin-bottom: 0.25rem; }
+.account__email, .account__section-head p { color: var(--ink-soft); }
+.account__signout { border-color: var(--line); background: transparent; }
+.account__section { padding-block: var(--s3); border-bottom: 1px solid var(--line); }
+.account__section-head { display: flex; align-items: center; justify-content: space-between; gap: var(--s2); margin-bottom: var(--s2); }
+.account__section-head h2 { margin: 0 0 0.25rem; font-size: var(--step-2); }
+.account__section-head p { margin: 0; }
+.account__section-head > span { color: var(--ink-soft); font-weight: 700; }
+.address-list, .order-list { display: grid; gap: var(--s2); margin-bottom: var(--s3); }
+.address-item { display: flex; justify-content: space-between; align-items: flex-start; gap: var(--s2); padding: var(--s2); border: 1px solid var(--line); border-radius: var(--radius-m); }
+.address-item p { margin: 0.25rem 0 0; color: var(--ink-soft); }
+.address-form { display: grid; gap: var(--s2); padding-top: var(--s2); }
+.address-form h3 { font-size: var(--step-1); }
+.address-form__grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s2); }
+.address-form__address { grid-column: 1 / -1; }
+.address-form__actions { display: flex; flex-wrap: wrap; gap: var(--s2); }
+.address-add { display: grid; place-items: center; gap: 0.25rem; width: min(100%, 190px); min-height: 118px; padding: var(--s2); border: 1.5px dashed var(--indigo); border-radius: var(--radius-m); background: transparent; color: var(--indigo); font: inherit; font-weight: 700; transition: background 0.15s, transform 0.15s; }
+.address-add:hover { background: color-mix(in srgb, var(--indigo) 6%, transparent); transform: translateY(-2px); }
+.address-add__plus { display: grid; place-items: center; width: 3.25rem; height: 3.25rem; border: 1.5px solid currentColor; border-radius: 50%; font-size: 2.6rem; font-weight: 400; line-height: 1; }
+.order-item { display: grid; gap: 0.65rem; padding: var(--s2); border: 1px solid var(--line); border-radius: var(--radius-m); }
+.order-item__top, .order-item__bottom { display: flex; justify-content: space-between; gap: var(--s2); }
+.order-item__top span, .order-item__bottom span, .order-item > p { color: var(--ink-soft); }
+.order-item > p { margin: 0; }
+.account__empty { color: var(--ink-soft); }
+.account-gate, .checkout-gate { display: grid; justify-items: start; gap: var(--s2); }
+.checkout__empty { display: grid; justify-items: start; align-content: start; gap: var(--s2); }
+.account-gate .page-title, .checkout-gate .page-title { margin: 0; }
+
+.checkout__addresses { display: grid; gap: var(--s2); border: 0; padding: 0; }
+.checkout__addresses legend { margin-bottom: var(--s2); padding: 0; font-weight: 700; }
+.checkout-address { display: flex; align-items: flex-start; gap: 0.75rem; padding: var(--s2); border: 1px solid var(--line); border-radius: var(--radius-m); cursor: pointer; }
+.checkout-address.is-selected { border-color: var(--indigo); box-shadow: 0 0 0 1px var(--indigo); }
+.checkout-address input { margin-top: 0.25rem; accent-color: var(--indigo); }
+.checkout-address > span { display: grid; gap: 0.2rem; }
+.checkout-address > span > span { color: var(--ink-soft); }
+.checkout__new-address { display: grid; gap: var(--s2); }
+.checkout__new-address > p { color: var(--ink-soft); }
+.checkout__new-address h2 { font-size: var(--step-1); }
 
 @media (max-width: 860px) {
   .hero__inner, .product, .checkout { grid-template-columns: 1fr; }
   .hero__inner { min-height: 0; }
   .hero__cloth { height: 320px; }
   .product__media, .summary { position: static; }
+}
+
+@media (max-width: 560px) {
+  .account__header { align-items: flex-start; }
+  .address-form__grid { grid-template-columns: 1fr; }
+  .address-form__address { grid-column: auto; }
+  .order-item__top { flex-wrap: wrap; }
 }

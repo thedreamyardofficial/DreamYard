@@ -7,6 +7,7 @@ const LINKS = [
   ["/products", "Products"],
   ["/sections", "Sections"],
   ["/orders", "Orders"],
+  ["/users", "Users"],
   ["/settings", "Site settings"],
 ];
 
