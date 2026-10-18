@@ -3,9 +3,16 @@ import { ADMIN_BASE } from "../config.js";
 
 const KEY = "dream-yard-admin-token";
 export const tokenStore = {
-  get: () => localStorage.getItem(KEY),
-  set: (t) => localStorage.setItem(KEY, t),
-  clear: () => localStorage.removeItem(KEY),
+  get: () => localStorage.getItem(KEY) || sessionStorage.getItem(KEY),
+  set: (token, remember = true) => {
+    localStorage.removeItem(KEY);
+    sessionStorage.removeItem(KEY);
+    (remember ? localStorage : sessionStorage).setItem(KEY, token);
+  },
+  clear: () => {
+    localStorage.removeItem(KEY);
+    sessionStorage.removeItem(KEY);
+  },
 };
 
 async function request(path, { method = "GET", body, form } = {}) {
@@ -31,7 +38,7 @@ async function request(path, { method = "GET", body, form } = {}) {
 }
 
 export const adminApi = {
-  login: (email, password) => request("/login", { method: "POST", body: { email, password } }),
+  login: (email, password, remember) => request("/login", { method: "POST", body: { email, password, remember } }),
   stats: () => request("/stats"),
   upload: (file) => {
     const form = new FormData();

@@ -5,7 +5,7 @@ import { adminApi, tokenStore } from "../adminApi.js";
 
 export default function Login() {
   const navigate = useNavigate();
-  const [form, setForm] = useState({ email: "", password: "" });
+  const [form, setForm] = useState({ email: "", password: "", remember: true });
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
 
@@ -14,8 +14,8 @@ export default function Login() {
     setBusy(true);
     setError("");
     try {
-      const { token } = await adminApi.login(form.email, form.password);
-      tokenStore.set(token);
+      const { token } = await adminApi.login(form.email, form.password, form.remember);
+      tokenStore.set(token, form.remember);
       navigate(ADMIN_BASE, { replace: true });
     } catch (err) {
       setError(err.message);
@@ -26,6 +26,12 @@ export default function Login() {
 
   return (
     <div className="adm__login">
+      <div className="startup-intro__lockup adm__login-brand" aria-label="the dream yard store">
+        <span className="startup-intro__the">the</span>
+        <span className="startup-intro__dream">dream</span>
+        <span className="startup-intro__yard">yard</span>
+        <span className="startup-intro__store">store</span>
+      </div>
       <form onSubmit={submit} className="adm__card adm__login-card">
         <h1>Admin sign in</h1>
         <label className="label">Email
@@ -33,6 +39,10 @@ export default function Login() {
         </label>
         <label className="label">Password
           <input className="field" type="password" required value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} />
+        </label>
+        <label className="check">
+          <input type="checkbox" checked={form.remember} onChange={(e) => setForm({ ...form, remember: e.target.checked })} />
+          Remember me
         </label>
         {error && <p className="notice notice--error">{error}</p>}
         <button className="a-btn a-btn--primary" disabled={busy}>{busy ? "Signing in…" : "Sign in"}</button>

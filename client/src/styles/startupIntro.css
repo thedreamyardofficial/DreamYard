@@ -1,0 +1,43 @@
+/* ---------- Startup intro ---------- */
+.startup-intro {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  background: var(--indigo-deep);
+  animation: startup-intro-exit 2.8s ease-in forwards;
+}
+
+.startup-intro__lockup {
+  display: grid;
+  grid-template-areas:
+    "the ."
+    "dream yard"
+    ". store";
+  grid-template-columns: max-content max-content;
+  grid-template-rows: auto auto auto;
+  width: max-content;
+  align-items: end;
+  column-gap: 0.12em;
+  color: var(--paper);
+  font-family: var(--font-display);
+  font-size: var(--step-5);
+  font-weight: 800;
+  line-height: 0.9;
+}
+
+.startup-intro__the { grid-area: the; justify-self: end;transform: translate(-4.1em,1.1em); }
+.startup-intro__dream { grid-area: dream; }
+.startup-intro__yard { grid-area: yard; }
+.startup-intro__store { grid-area: store; }
+.startup-intro__the,
+.startup-intro__store {
+  font-size: 0.23em;
+  line-height: 1;
+}
+
+@keyframes startup-intro-exit {
+  0%, 76% { opacity: 1; }
+  100% { opacity: 0; visibility: hidden; }
+}
