@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { api, rupees } from "../api/client.js";
 import { useCart } from "../context/CartContext.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
@@ -16,10 +16,12 @@ const ADDRESS_FIELDS = [
 ];
 
 export default function Account() {
-  const { user, token, loading, openAuth, signOut, addAddress, removeAddress } = useAuth();
+  const location = useLocation();
+  const { user, token, loading, openAuth, signOut, addAddress, updateAddress, removeAddress } = useAuth();
   const { flushCart } = useCart();
   const [form, setForm] = useState(EMPTY_ADDRESS);
   const [showAddressForm, setShowAddressForm] = useState(false);
+  const [editingAddressId, setEditingAddressId] = useState(null);
   const [orders, setOrders] = useState([]);
   const [visibleCancellationReasons, setVisibleCancellationReasons] = useState({});
   const [ordersError, setOrdersError] = useState("");
@@ -40,6 +42,14 @@ export default function Account() {
 
   useEffect(() => setAvatarFailed(false), [user?.googleAvatarUrl]);
 
+  useEffect(() => {
+    if (!location.hash || loading) return undefined;
+    const frame = window.requestAnimationFrame(() => {
+      document.getElementById(location.hash.slice(1))?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [location.hash, loading]);
+
   if (loading) return <p className="empty">Loading your account…</p>;
   if (!user) {
     return (
@@ -57,9 +67,14 @@ export default function Account() {
     setBusy(true);
     setError("");
     try {
-      await addAddress(form);
+      if (editingAddressId) {
+        await updateAddress(editingAddressId, form);
+      } else {
+        await addAddress(form);
+      }
       setForm(EMPTY_ADDRESS);
       setShowAddressForm(false);
+      setEditingAddressId(null);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -74,6 +89,20 @@ export default function Account() {
     } catch (err) {
       setError(err.message);
     }
+  };
+
+  const editAddress = (address) => {
+    setForm(Object.fromEntries(ADDRESS_FIELDS.map(([key]) => [key, address[key] || ""])));
+    setEditingAddressId(address._id);
+    setShowAddressForm(true);
+    setError("");
+  };
+
+  const cancelAddressForm = () => {
+    setForm(EMPTY_ADDRESS);
+    setEditingAddressId(null);
+    setShowAddressForm(false);
+    setError("");
   };
 
   const handleSignOut = async () => {
@@ -115,10 +144,9 @@ export default function Account() {
       </header>
       {signOutError && <p className="notice notice--error" role="alert">{signOutError}</p>}
 
-      <section className="account__section">
+      <section className="account__section" id="delivery-addresses">
         <div className="account__section-head">
-          <div><h2>Delivery addresses</h2><p>Save up to three recipients and destinations.</p></div>
-          <span>{user.addresses.length} / 3</span>
+          <div><h2>Delivery addresses</h2></div>
         </div>
         {user.addresses.length > 0 && (
           <ul className="address-list">
@@ -129,12 +157,15 @@ export default function Account() {
                   <p>{address.email} · {address.phone}</p>
                   <p>{address.address}, {address.city} {address.pincode}</p>
                 </div>
-                <button className="link-btn" onClick={() => deleteAddress(address._id)}>Remove</button>
+                <div className="address-item__actions">
+                  <button className="link-btn" type="button" onClick={() => editAddress(address)}>Edit</button>
+                  <button className="link-btn" type="button" onClick={() => deleteAddress(address._id)}>Remove</button>
+                </div>
               </li>
             ))}
           </ul>
         )}
-        {user.addresses.length < 3 && !showAddressForm && (
+        {user.addresses.length < 20 && !showAddressForm && (
           <button
             className="address-add"
             type="button"
@@ -145,9 +176,9 @@ export default function Account() {
             <span>Add address</span>
           </button>
         )}
-        {user.addresses.length < 3 && showAddressForm && (
+        {showAddressForm && (user.addresses.length < 20 || editingAddressId) && (
           <form className="address-form" onSubmit={submitAddress}>
-            <h3>{user.addresses.length ? "Add another address" : "Add your first address"}</h3>
+            <h3>{editingAddressId ? "Edit delivery address" : user.addresses.length ? "Add another address" : "Add your first address"}</h3>
             <div className="address-form__grid">
               {ADDRESS_FIELDS.map(([key, label, type, autocomplete]) => (
                 <label className={`label address-form__${key}`} key={key}>{label}
@@ -166,15 +197,15 @@ export default function Account() {
             </div>
             {error && <p className="notice notice--error" role="alert">{error}</p>}
             <div className="address-form__actions">
-              <button className="btn btn--solid" disabled={busy}>{busy ? "Saving…" : "Save address"}</button>
-              <button className="btn account__signout" type="button" disabled={busy} onClick={() => { setShowAddressForm(false); setError(""); }}>Cancel</button>
+              <button className="btn btn--solid" disabled={busy}>{busy ? "Saving…" : editingAddressId ? "Save changes" : "Save address"}</button>
+              <button className="btn account__signout" type="button" disabled={busy} onClick={cancelAddressForm}>Cancel</button>
             </div>
           </form>
         )}
-        {error && user.addresses.length === 3 && <p className="notice notice--error" role="alert">{error}</p>}
+        {error && user.addresses.length === 20 && <p className="notice notice--error" role="alert">{error}</p>}
       </section>
 
-      <section className="account__section">
+      <section className="account__section" id="orders">
         <div className="account__section-head"><div><h2>Order history</h2><p>Your recent purchases.</p></div></div>
         {ordersError && <p className="notice notice--error">{ordersError}</p>}
         {!ordersError && orders.length === 0 ? (

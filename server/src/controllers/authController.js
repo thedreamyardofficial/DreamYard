@@ -153,9 +153,9 @@ export async function addAddress(req, res) {
     res.status(404);
     throw new Error("Account not found.");
   }
-  if (user.addresses.length >= 3) {
+  if (user.addresses.length >= 20) {
     res.status(400);
-    throw new Error("You can save up to 3 addresses. Remove one before adding another.");
+    throw new Error("You can save up to 20 addresses. Remove one before adding another.");
   }
   user.addresses.push({
     ...input,
@@ -168,6 +168,34 @@ export async function addAddress(req, res) {
   });
   await user.save();
   res.status(201).json({ user: publicUser(user) });
+}
+
+export async function updateAddress(req, res) {
+  if (!mongoose.isValidObjectId(req.params.addressId)) {
+    res.status(400);
+    throw new Error("That address isn't valid.");
+  }
+  const input = req.body || {};
+  if (!validateAddress(input)) {
+    res.status(400);
+    throw new Error("Check the address, email, phone number, and 6-digit pincode.");
+  }
+  const user = await User.findById(req.user.id);
+  const address = user?.addresses.id(req.params.addressId);
+  if (!user || !address) {
+    res.status(404);
+    throw new Error("Address not found.");
+  }
+  Object.assign(address, {
+    name: input.name.trim(),
+    email: input.email.trim().toLowerCase(),
+    phone: input.phone.trim(),
+    address: input.address.trim(),
+    city: input.city.trim(),
+    pincode: input.pincode.trim(),
+  });
+  await user.save();
+  res.json({ user: publicUser(user) });
 }
 
 export async function removeAddress(req, res) {

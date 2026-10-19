@@ -31,7 +31,7 @@ const userSchema = new mongoose.Schema(
     addresses: {
       type: [addressSchema],
       default: [],
-      validate: { validator: (addresses) => addresses.length <= 3, message: "You can save up to 3 addresses." },
+      validate: { validator: (addresses) => addresses.length <= 20, message: "You can save up to 20 addresses." },
     },
     cart: { type: [cartLineSchema], default: [] },
   },

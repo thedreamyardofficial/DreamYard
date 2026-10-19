@@ -34,21 +34,6 @@ async function prepareOrder(res, userId, addressId, items) {
     return { product: p._id, name: p.name, size: String(i.size || ""), qty, price: p.price };
   });
 
-  // Take stock atomically; undo if any item can't be fulfilled
-  const taken = [];
-  for (const item of orderItems) {
-    const { modifiedCount } = await Product.updateOne(
-      { _id: item.product, stock: { $gte: item.qty } },
-      { $inc: { stock: -item.qty } }
-    );
-    if (!modifiedCount) {
-      await Promise.all(taken.map((t) => Product.updateOne({ _id: t.product }, { $inc: { stock: t.qty } })));
-      res.status(400);
-      throw new Error(`${item.name} doesn't have enough stock for your order.`);
-    }
-    taken.push(item);
-  }
-
   const total = orderItems.reduce((sum, i) => sum + i.price * i.qty, 0);
   const customer = address.toObject();
   delete customer._id;

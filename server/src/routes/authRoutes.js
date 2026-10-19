@@ -19,6 +19,7 @@ router.post("/google", authLimiter, h(auth.googleLogin));
 router.use(requireUser);
 router.get("/me", h(auth.me));
 router.post("/addresses", h(auth.addAddress));
+router.put("/addresses/:addressId", h(auth.updateAddress));
 router.delete("/addresses/:addressId", h(auth.removeAddress));
 router.get("/cart", h(auth.getCart));
 router.put("/cart", h(auth.saveCart));

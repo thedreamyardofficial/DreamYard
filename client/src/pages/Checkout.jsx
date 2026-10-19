@@ -218,7 +218,7 @@ export default function Checkout() {
             <Link className="link-btn" to="/account">Manage saved addresses</Link>
           </fieldset>
         )}
-        {user.addresses.length < 3 && !showAddressForm && (
+        {user.addresses.length < 20 && !showAddressForm && (
           <button
             className="address-add"
             type="button"
@@ -229,7 +229,7 @@ export default function Checkout() {
             <span>{user.addresses.length ? "Add another address" : "Add address"}</span>
           </button>
         )}
-        {user.addresses.length < 3 && showAddressForm && (
+        {user.addresses.length < 20 && showAddressForm && (
           <div className="checkout__new-address">
             <h2>{user.addresses.length ? "Add another address" : "Add your first address"}</h2>
             {ADDRESS_FIELDS.map(([key, label, type]) => (

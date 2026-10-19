@@ -34,6 +34,7 @@ export const api = {
   googleLogin: (credential) => request("/auth/google", { method: "POST", body: JSON.stringify({ credential }) }),
   me: (token) => request("/auth/me", {}, token),
   addAddress: (token, body) => request("/auth/addresses", { method: "POST", body: JSON.stringify(body) }, token),
+  updateAddress: (token, addressId, body) => request(`/auth/addresses/${addressId}`, { method: "PUT", body: JSON.stringify(body) }, token),
   removeAddress: (token, addressId) => request(`/auth/addresses/${addressId}`, { method: "DELETE" }, token),
   getCart: (token) => request("/auth/cart", {}, token),
   saveCart: (token, items) => request("/auth/cart", { method: "PUT", body: JSON.stringify({ items }) }, token),

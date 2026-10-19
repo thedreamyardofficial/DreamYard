@@ -67,6 +67,12 @@ export function AuthProvider({ children }) {
     return updatedUser;
   };
 
+  const updateAddress = async (addressId, address) => {
+    const { user: updatedUser } = await api.updateAddress(token, addressId, address);
+    setUser(updatedUser);
+    return updatedUser;
+  };
+
   const removeAddress = async (addressId) => {
     const { user: updatedUser } = await api.removeAddress(token, addressId);
     setUser(updatedUser);
@@ -86,6 +92,7 @@ export function AuthProvider({ children }) {
     openAuth,
     closeAuth,
     addAddress,
+    updateAddress,
     removeAddress,
   }), [token, user, loading, authOpen, authMode]);
 

@@ -93,12 +93,14 @@
 .account__email, .account__section-head p { color: var(--ink-soft); }
 .account__signout { border-color: var(--line); background: transparent; }
 .account__section { padding-block: var(--s3); border-bottom: 1px solid var(--line); }
+.account__section[id] { scroll-margin-top: 84px; }
 .account__section-head { display: flex; align-items: center; justify-content: space-between; gap: var(--s2); margin-bottom: var(--s2); }
 .account__section-head h2 { margin: 0 0 0.25rem; font-size: var(--step-2); }
 .account__section-head p { margin: 0; }
 .account__section-head > span { color: var(--ink-soft); font-weight: 700; }
 .address-list, .order-list { display: grid; gap: var(--s2); margin-bottom: var(--s3); }
 .address-item { display: flex; justify-content: space-between; align-items: flex-start; gap: var(--s2); padding: var(--s2); border: 1px solid var(--line); border-radius: var(--radius-m); }
+.address-item__actions { display: flex; flex-shrink: 0; gap: var(--s2); }
 .address-item p { margin: 0.25rem 0 0; color: var(--ink-soft); }
 .address-form { display: grid; gap: var(--s2); padding-top: var(--s2); }
 .address-form h3 { font-size: var(--step-1); }
