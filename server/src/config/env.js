@@ -8,6 +8,7 @@ const required = [
   "CLOUDINARY_CLOUD_NAME",
   "CLOUDINARY_API_KEY",
   "CLOUDINARY_API_SECRET",
+  ...(process.env.RAZORPAY_ENABLED === "true" ? ["RAZORPAY_KEY_ID", "RAZORPAY_KEY_SECRET"] : []),
 ];
 const missing = required.filter((k) => !process.env[k]);
 if (missing.length) {
@@ -26,6 +27,9 @@ export const env = {
   cloudinaryCloudName: process.env.CLOUDINARY_CLOUD_NAME,
   cloudinaryApiKey: process.env.CLOUDINARY_API_KEY,
   cloudinaryApiSecret: process.env.CLOUDINARY_API_SECRET,
+  razorpayEnabled: process.env.RAZORPAY_ENABLED === "true",
+  razorpayKeyId: process.env.RAZORPAY_KEY_ID || "",
+  razorpayKeySecret: process.env.RAZORPAY_KEY_SECRET || "",
   clientOrigins: (process.env.CLIENT_ORIGIN || "http://localhost:5173")
     .split(",")
     .map((s) => s.trim().replace(/\/$/, ""))

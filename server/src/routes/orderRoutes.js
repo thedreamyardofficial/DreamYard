@@ -1,6 +1,6 @@
 import { Router } from "express";
 import rateLimit from "express-rate-limit";
-import { createOrder } from "../controllers/orderController.js";
+import { createOrder, createRazorpayOrder, paymentConfig, verifyRazorpayPayment } from "../controllers/orderController.js";
 import { asyncHandler } from "../middleware/error.js";
 import { requireUser } from "../middleware/userAuth.js";
 
@@ -14,4 +14,7 @@ const orderLimiter = rateLimit({
 });
 
 router.post("/", requireUser, orderLimiter, asyncHandler(createOrder));
+router.get("/payment-config", asyncHandler(paymentConfig));
+router.post("/razorpay/order", requireUser, orderLimiter, asyncHandler(createRazorpayOrder));
+router.post("/razorpay/verify", requireUser, orderLimiter, asyncHandler(verifyRazorpayPayment));
 export default router;

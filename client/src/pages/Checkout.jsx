@@ -5,6 +5,7 @@ import { useCart } from "../context/CartContext.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
 
 const EMPTY_ADDRESS = { name: "", email: "", phone: "", address: "", city: "", pincode: "" };
+const RAZORPAY_SCRIPT_URL = "https://checkout.razorpay.com/v1/checkout.js";
 const ADDRESS_FIELDS = [
   ["name", "Recipient name", "text"],
   ["email", "Recipient email", "email"],
@@ -13,6 +14,26 @@ const ADDRESS_FIELDS = [
   ["city", "City", "text"],
   ["pincode", "Pincode", "text"],
 ];
+
+let razorpayScriptPromise;
+
+function loadRazorpayScript() {
+  if (window.Razorpay) return Promise.resolve();
+  if (!razorpayScriptPromise) {
+    razorpayScriptPromise = new Promise((resolve, reject) => {
+      const script = document.createElement("script");
+      script.src = RAZORPAY_SCRIPT_URL;
+      script.async = true;
+      script.onload = () => window.Razorpay ? resolve() : reject(new Error("Secure checkout could not be loaded."));
+      script.onerror = () => reject(new Error("Secure checkout could not be loaded."));
+      document.body.appendChild(script);
+    }).catch((error) => {
+      razorpayScriptPromise = null;
+      throw error;
+    });
+  }
+  return razorpayScriptPromise;
+}
 
 export default function Checkout() {
   const { lines, total, clear, changeQty, remove } = useCart();
@@ -23,6 +44,15 @@ export default function Checkout() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [order, setOrder] = useState(null);
+  const [paymentConfig, setPaymentConfig] = useState(null);
+
+  useEffect(() => {
+    let active = true;
+    api.paymentConfig()
+      .then((config) => { if (active) setPaymentConfig(config); })
+      .catch((err) => { if (active) { setPaymentConfig({ error: err.message }); setError(err.message); } });
+    return () => { active = false; };
+  }, []);
 
   useEffect(() => {
     if (!user) return;
@@ -56,15 +86,70 @@ export default function Checkout() {
     setError("");
     try {
       if (!selectedAddressId) throw new Error("Select or add a delivery address to continue.");
-      const placed = await api.createOrder({
+      if (!paymentConfig || paymentConfig.error) throw new Error(paymentConfig?.error || "Payment options are still loading. Please try again.");
+      const checkoutDetails = {
         addressId: selectedAddressId,
         items: lines.map((l) => ({ productId: l.productId, size: l.size, qty: l.qty })),
-      }, token);
+      };
+
+      if (paymentConfig.enabled) {
+        const gatewayOrder = await api.createPaymentOrder(checkoutDetails, token);
+        await loadRazorpayScript();
+        let paymentFailed = false;
+        const address = user.addresses.find((entry) => entry._id === selectedAddressId);
+        const checkout = new window.Razorpay({
+          key: gatewayOrder.keyId,
+          amount: gatewayOrder.amount,
+          currency: gatewayOrder.currency,
+          name: "DreamYard",
+          description: "Complete your order",
+          order_id: gatewayOrder.orderId,
+          prefill: {
+            name: address?.name || user.name,
+            email: address?.email || user.email,
+            contact: address?.phone || "",
+          },
+          theme: { color: "#1b2559" },
+          handler: async (payment) => {
+            try {
+              const placed = await api.verifyPayment({
+                razorpayOrderId: payment.razorpay_order_id,
+                razorpayPaymentId: payment.razorpay_payment_id,
+                razorpaySignature: payment.razorpay_signature,
+              }, token);
+              setOrder(placed);
+              clear();
+            } catch (err) {
+              setError(`Payment could not be verified, so no order was placed. ${err.message} Please try again.`);
+            } finally {
+              setBusy(false);
+            }
+          },
+          modal: {
+            ondismiss: () => {
+              setBusy(false);
+              if (!paymentFailed) setError("Payment was cancelled. No order was placed. You can try again.");
+            },
+          },
+        });
+        checkout.on("payment.failed", (event) => {
+          paymentFailed = true;
+          const detail = event?.error?.description;
+          setError(detail
+            ? `Payment failed: ${detail}. No order was placed. Please try again.`
+            : "Payment failed. No order was placed. Please try again.");
+          setBusy(false);
+        });
+        checkout.open();
+        return;
+      }
+
+      const placed = await api.createOrder(checkoutDetails, token);
       setOrder(placed);
       clear();
+      setBusy(false);
     } catch (err) {
-      setError(err.message);
-    } finally {
+      setError(paymentConfig?.enabled ? `${err.message} No order was placed. Please try again.` : err.message);
       setBusy(false);
     }
   };
@@ -169,7 +254,11 @@ export default function Checkout() {
           </div>
         )}
         {error && <p className="notice notice--error">{error}</p>}
-        <button className="btn btn--solid" disabled={busy || !selectedAddressId}>{busy ? "Placing order…" : `Place order · ${rupees(total)}`}</button>
+        <button className="btn btn--solid" disabled={busy || !selectedAddressId || !paymentConfig || Boolean(paymentConfig.error)}>
+          {busy ? (paymentConfig?.enabled ? "Opening secure checkout…" : "Placing order…")
+            : paymentConfig?.enabled ? `Pay with Razorpay · ${rupees(total)}`
+              : paymentConfig ? `Place order · ${rupees(total)}` : "Loading payment options…"}
+        </button>
       </form>
 
       <aside className="summary">
@@ -191,7 +280,11 @@ export default function Checkout() {
           ))}
         </ul>
         <p className="summary__total"><span>Total</span><strong>{rupees(total)}</strong></p>
-        <p className="summary__note">Pay on delivery.</p>
+        <p className="summary__note">
+          {paymentConfig?.enabled ? "Secure online payment with Razorpay."
+            : paymentConfig ? "Pay on delivery."
+              : "Loading payment options…"}
+        </p>
       </aside>
     </div>
   );

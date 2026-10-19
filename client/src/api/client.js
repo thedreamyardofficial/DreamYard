@@ -38,7 +38,10 @@ export const api = {
   getCart: (token) => request("/auth/cart", {}, token),
   saveCart: (token, items) => request("/auth/cart", { method: "PUT", body: JSON.stringify({ items }) }, token),
   orders: (token) => request("/auth/orders", {}, token),
+  paymentConfig: () => request("/orders/payment-config"),
   createOrder: (body, token) => request("/orders", { method: "POST", body: JSON.stringify(body) }, token),
+  createPaymentOrder: (body, token) => request("/orders/razorpay/order", { method: "POST", body: JSON.stringify(body) }, token),
+  verifyPayment: (body, token) => request("/orders/razorpay/verify", { method: "POST", body: JSON.stringify(body) }, token),
 };
 
 export const rupees = (n) => `₹${Number(n).toLocaleString("en-IN")}`;

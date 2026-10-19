@@ -50,8 +50,9 @@ export default function PrivacyPolicy() {
           <p>
             Account and order information is stored in our application database. Shopping bag and sign-in session
             information may also be stored in your browser. We use Google to provide Google sign-in and service
-            providers to host and operate the website. We do not store payment card details; this store currently
-            displays pay-on-delivery checkout.
+            providers to host and operate the website. When online payments are enabled, Razorpay processes the
+            payment. We do not store card details, but we retain payment method and transaction references with
+            the order. Otherwise, checkout uses pay on delivery.
           </p>
         </section>
 

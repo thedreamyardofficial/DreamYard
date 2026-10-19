@@ -780,8 +780,11 @@ Format for each file:
 
  Checkout.jsx
    Delivery form + order summary. After success shows the order number
-   and empties the bag. Payment is "pay on delivery" (text in the summary
-   box). CHANGE the form fields in the FIELDS list (any new field also
+  and empties the bag. Payment defaults to Pay on Delivery. To require
+  Razorpay, set RAZORPAY_ENABLED=true and add the Razorpay test/live key ID
+  and secret in server/.env; the public checkout key is served by the API.
+  With RAZORPAY_ENABLED=false, the current Pay on Delivery flow is unchanged.
+  CHANGE the form fields in the FIELDS list (any new field also
    needs to be accepted in server/src/models/Order.js and checked in
    server/src/controllers/orderController.js).
 

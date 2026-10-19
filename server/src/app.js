@@ -16,7 +16,17 @@ import { notFound, errorHandler } from "./middleware/error.js";
 const app = express();
 app.set("trust proxy", 1);
 
-app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" } }));
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" },
+  contentSecurityPolicy: {
+    directives: {
+      ...helmet.contentSecurityPolicy.getDefaultDirectives(),
+      "script-src": ["'self'", "https://checkout.razorpay.com"],
+      "frame-src": ["'self'", "https://api.razorpay.com", "https://checkout.razorpay.com"],
+      "connect-src": ["'self'", "https://api.razorpay.com", "https://checkout.razorpay.com"],
+    },
+  },
+}));
 app.use(compression());
 app.use(
   cors({
