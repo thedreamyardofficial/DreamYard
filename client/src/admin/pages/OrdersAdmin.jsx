@@ -4,6 +4,9 @@ import { rupees } from "../../api/client.js";
 
 const STATUSES = ["placed", "shipped", "delivered", "cancelled"];
 
+const formatDateTime = (value) => value ? new Date(value).toLocaleString("en-IN") : "Not available";
+const showValue = (value) => value == null || value === "" ? "Not available" : value;
+
 export default function OrdersAdmin() {
   const [orders, setOrders] = useState([]);
   const [open, setOpen] = useState(null);
@@ -112,13 +115,63 @@ export default function OrdersAdmin() {
                     {open === o._id && (
                       <tr className="adm__detail">
                         <td colSpan="6">
-                          <p><strong>{o.customer.name}</strong> · {o.customer.email} · {o.customer.phone}</p>
-                          <p>{o.customer.address}, {o.customer.city} {o.customer.pincode}</p>
-                          <ul>
-                            {o.items.map((i, idx) => (
-                              <li key={idx}>{i.name} ({i.size}) × {i.qty} — {rupees(i.price * i.qty)}</li>
-                            ))}
-                          </ul>
+                          <div className="adm__order-detail">
+                            <section className="adm__order-detail-section">
+                              <h3>Order details</h3>
+                              <dl className="adm__order-detail-grid">
+                                <div><dt>Full order ID</dt><dd>{o._id}</dd></div>
+                                <div><dt>Account ID</dt><dd>{showValue(o.user?._id || o.user)}</dd></div>
+                                <div><dt>Status</dt><dd>{showValue(o.status)}</dd></div>
+                                <div><dt>Order total</dt><dd>{rupees(o.total)}</dd></div>
+                                <div><dt>Created</dt><dd>{formatDateTime(o.createdAt)}</dd></div>
+                                <div><dt>Last updated</dt><dd>{formatDateTime(o.updatedAt)}</dd></div>
+                                <div><dt>Cancellation reason</dt><dd>{showValue(o.cancellationReason)}</dd></div>
+                              </dl>
+                            </section>
+
+                            <section className="adm__order-detail-section">
+                              <h3>Customer and delivery</h3>
+                              <dl className="adm__order-detail-grid">
+                                <div><dt>Name</dt><dd>{showValue(o.customer.name)}</dd></div>
+                                <div><dt>Email</dt><dd>{showValue(o.customer.email)}</dd></div>
+                                <div><dt>Phone</dt><dd>{showValue(o.customer.phone)}</dd></div>
+                                <div><dt>Street address</dt><dd>{showValue(o.customer.address)}</dd></div>
+                                <div><dt>City</dt><dd>{showValue(o.customer.city)}</dd></div>
+                                <div><dt>Pincode</dt><dd>{showValue(o.customer.pincode)}</dd></div>
+                              </dl>
+                            </section>
+
+                            <section className="adm__order-detail-section">
+                              <h3>Items ({o.items.length})</h3>
+                              <ol className="adm__order-items">
+                                {o.items.map((item, index) => (
+                                  <li key={`${item.product}-${index}`}>
+                                    <strong>{showValue(item.name)}</strong>
+                                    <dl className="adm__order-detail-grid">
+                                      <div><dt>Product ID</dt><dd>{showValue(item.product)}</dd></div>
+                                      <div><dt>Size</dt><dd>{showValue(item.size)}</dd></div>
+                                      <div><dt>Quantity</dt><dd>{showValue(item.qty)}</dd></div>
+                                      <div><dt>Unit price</dt><dd>{rupees(item.price)}</dd></div>
+                                      <div><dt>Line total</dt><dd>{rupees(item.price * item.qty)}</dd></div>
+                                    </dl>
+                                  </li>
+                                ))}
+                              </ol>
+                            </section>
+
+                            <section className="adm__order-detail-section">
+                              <h3>Payment</h3>
+                              <dl className="adm__order-detail-grid">
+                                <div><dt>Payment method</dt><dd>{o.paymentMethod === "razorpay" ? "Razorpay" : "Pay on delivery"}</dd></div>
+                                <div><dt>Payment status</dt><dd>{o.paymentMethod === "razorpay" ? "Captured" : "Due on delivery"}</dd></div>
+                                <div><dt>Paid amount</dt><dd>{o.paymentAmount != null ? `${showValue(o.paymentCurrency)} ${(Number(o.paymentAmount) / 100).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "Not available"}</dd></div>
+                                <div><dt>Razorpay order ID</dt><dd>{showValue(o.razorpayOrderId)}</dd></div>
+                                <div><dt>Razorpay payment ID</dt><dd>{showValue(o.razorpayPaymentId)}</dd></div>
+                                <div><dt>Razorpay payment method</dt><dd>{showValue(o.razorpayMethod)}</dd></div>
+                                <div className="adm__order-detail-wide"><dt>Verification signature</dt><dd>{showValue(o.razorpaySignature)}</dd></div>
+                              </dl>
+                            </section>
+                          </div>
                         </td>
                       </tr>
                     )}

@@ -32,6 +32,16 @@
 .adm__detail td { background: var(--mist); }
 .adm__detail p, .adm__detail ul { margin: 0 0 0.4rem; }
 .adm__detail ul { padding-left: 1.1rem; list-style: disc; }
+.adm__order-detail { display: grid; gap: var(--s3); padding: var(--s1) 0; }
+.adm__order-detail-section { display: grid; gap: 0.65rem; }
+.adm__order-detail-section h3 { margin: 0; font-size: 1rem; }
+.adm__order-detail-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 190px), 1fr)); gap: 0.75rem 1.25rem; margin: 0; }
+.adm__order-detail-grid > div { min-width: 0; }
+.adm__order-detail-grid dt { color: var(--ink-soft); font-size: 0.82rem; }
+.adm__order-detail-grid dd { margin: 0.15rem 0 0; overflow-wrap: anywhere; font-weight: 600; }
+.adm__order-detail-wide { grid-column: 1 / -1; }
+.adm__order-items { display: grid; gap: var(--s2); margin: 0; padding-left: 1.25rem; }
+.adm__order-items li { display: grid; gap: 0.6rem; }
 .adm__search { max-width: 320px; }
 .adm__inline { display: flex; gap: 0.5rem; }
 .adm__num { width: 90px; }
