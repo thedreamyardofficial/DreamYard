@@ -8,13 +8,28 @@ export default function OrdersAdmin() {
   const [orders, setOrders] = useState([]);
   const [open, setOpen] = useState(null);
   const [error, setError] = useState("");
+  const [cancellationEdits, setCancellationEdits] = useState({});
+  const [savingOrder, setSavingOrder] = useState(null);
 
   const load = () => adminApi.orders().then(setOrders).catch((e) => setError(e.message));
   useEffect(() => { load(); }, []);
 
   const run = async (fn) => {
     setError("");
-    try { await fn(); await load(); } catch (e) { setError(e.message); }
+    try { await fn(); await load(); return true; } catch (e) { setError(e.message); return false; }
+  };
+
+  const changeStatus = async (id, status, reason = "") => {
+    setSavingOrder(id);
+    const saved = await run(() => adminApi.setOrderStatus(id, status, reason));
+    if (saved) {
+      setCancellationEdits((current) => {
+        const next = { ...current };
+        delete next[id];
+        return next;
+      });
+    }
+    setSavingOrder(null);
   };
 
   return (
@@ -29,7 +44,9 @@ export default function OrdersAdmin() {
             <table className="adm__table">
               <thead><tr><th>Order</th><th>Date</th><th>Customer</th><th>Total</th><th>Status</th><th></th></tr></thead>
               <tbody>
-                {orders.map((o) => (
+                {orders.map((o) => {
+                  const edit = cancellationEdits[o._id] || { status: o.status, reason: o.cancellationReason || "" };
+                  return (
                   <Fragment key={o._id}>
                     <tr>
                       <td>#{o._id.slice(-6)}</td>
@@ -37,10 +54,55 @@ export default function OrdersAdmin() {
                       <td>{o.customer.name}</td>
                       <td>{rupees(o.total)}</td>
                       <td>
-                        <select className="field adm__select" value={o.status} disabled={o.status === "cancelled"}
-                          onChange={(e) => run(() => adminApi.setOrderStatus(o._id, e.target.value))}>
-                          {STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
-                        </select>
+                        <div className="adm__order-status">
+                          <select className="field adm__select" value={edit.status} disabled={savingOrder === o._id}
+                            onChange={(event) => {
+                              const status = event.target.value;
+                              if (status === "cancelled") {
+                                setCancellationEdits((current) => ({
+                                  ...current,
+                                  [o._id]: { status, reason: current[o._id]?.reason ?? o.cancellationReason ?? "" },
+                                }));
+                                return;
+                              }
+                              if (status === o.status) {
+                                setCancellationEdits((current) => {
+                                  const next = { ...current };
+                                  delete next[o._id];
+                                  return next;
+                                });
+                              } else {
+                                void changeStatus(o._id, status);
+                              }
+                            }}>
+                            {STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
+                          </select>
+                          {edit.status === "cancelled" && (
+                            <>
+                              <label className="adm__reason-label" htmlFor={`cancellation-reason-${o._id}`}>Cancellation reason</label>
+                              <textarea
+                                id={`cancellation-reason-${o._id}`}
+                                className="field adm__reason-input"
+                                rows="2"
+                                maxLength="500"
+                                required
+                                value={edit.reason}
+                                onChange={(event) => setCancellationEdits((current) => ({
+                                  ...current,
+                                  [o._id]: { ...edit, reason: event.target.value },
+                                }))}
+                              />
+                              <button
+                                className="a-btn a-btn--primary adm__reason-save"
+                                type="button"
+                                disabled={!edit.reason.trim() || savingOrder === o._id || (o.status === "cancelled" && edit.reason.trim() === (o.cancellationReason || "").trim())}
+                                onClick={() => changeStatus(o._id, "cancelled", edit.reason)}
+                              >
+                                {o.status === "cancelled" ? "Update reason" : "Save cancellation"}
+                              </button>
+                            </>
+                          )}
+                        </div>
                       </td>
                       <td className="adm__actions">
                         <button className="link-btn" onClick={() => setOpen(open === o._id ? null : o._id)}>{open === o._id ? "Hide" : "Details"}</button>
@@ -61,7 +123,8 @@ export default function OrdersAdmin() {
                       </tr>
                     )}
                   </Fragment>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
           </div>

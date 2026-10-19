@@ -25,6 +25,7 @@ const orderSchema = new mongoose.Schema(
     items: { type: [orderItemSchema], validate: (v) => v.length > 0 },
     total: { type: Number, required: true },
     status: { type: String, enum: ["placed", "shipped", "delivered", "cancelled"], default: "placed" },
+    cancellationReason: { type: String, trim: true, maxlength: 500, default: "" },
   },
   { timestamps: true }
 );

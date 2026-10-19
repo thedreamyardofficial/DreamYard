@@ -5,6 +5,7 @@ import { useCart } from "../context/CartContext.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
 
 const EMPTY_ADDRESS = { name: "", email: "", phone: "", address: "", city: "", pincode: "" };
+const ORDER_STAGES = ["placed", "shipped", "delivered"];
 const ADDRESS_FIELDS = [
   ["name", "Recipient name", "text", "name"],
   ["email", "Recipient email", "email", "email"],
@@ -20,6 +21,7 @@ export default function Account() {
   const [form, setForm] = useState(EMPTY_ADDRESS);
   const [showAddressForm, setShowAddressForm] = useState(false);
   const [orders, setOrders] = useState([]);
+  const [visibleCancellationReasons, setVisibleCancellationReasons] = useState({});
   const [ordersError, setOrdersError] = useState("");
   const [avatarFailed, setAvatarFailed] = useState(false);
   const [error, setError] = useState("");
@@ -186,7 +188,42 @@ export default function Account() {
                   <span>{new Date(order.createdAt).toLocaleDateString()}</span>
                 </div>
                 <p>{order.items.map((item) => `${item.name} (${item.size}) × ${item.qty}`).join(", ")}</p>
-                <div className="order-item__bottom"><span>{order.status}</span><strong>{rupees(order.total)}</strong></div>
+                <div className="order-item__bottom">
+                  {order.status === "cancelled" ? (
+                    <div className="order-progress__cancelled-wrap">
+                      <div className="order-progress__cancelled-row">
+                        <p className="order-progress__cancelled">Cancelled</p>
+                        <button
+                          className="link-btn order-progress__reason-toggle"
+                          type="button"
+                          aria-expanded={Boolean(visibleCancellationReasons[order._id])}
+                          onClick={() => setVisibleCancellationReasons((current) => ({ ...current, [order._id]: !current[order._id] }))}
+                        >
+                          Click to know why
+                        </button>
+                      </div>
+                      {visibleCancellationReasons[order._id] && (
+                        <p className="order-progress__reason">{order.cancellationReason || "No cancellation reason was provided."}</p>
+                      )}
+                    </div>
+                  ) : (
+                    <div
+                      className="order-progress"
+                      role="list"
+                      aria-label={`Order status: ${order.status}`}
+                      style={{ "--progress": `${(ORDER_STAGES.indexOf(order.status) / (ORDER_STAGES.length - 1)) * 100}%` }}
+                    >
+                      <span className="order-progress__track" aria-hidden="true" />
+                      {ORDER_STAGES.map((stage, index) => (
+                        <span className={`order-progress__step${index <= ORDER_STAGES.indexOf(order.status) ? " is-reached" : ""}`} role="listitem" key={stage}>
+                          <span className="order-progress__dot" aria-hidden="true" />
+                          <span>{stage}</span>
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                  <strong>{rupees(order.total)}</strong>
+                </div>
               </li>
             ))}
           </ul>

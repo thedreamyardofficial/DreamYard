@@ -110,8 +110,26 @@
 .address-add__plus { display: grid; place-items: center; width: 3.25rem; height: 3.25rem; border: 1.5px solid currentColor; border-radius: 50%; font-size: 2.6rem; font-weight: 400; line-height: 1; }
 .order-item { display: grid; gap: 0.65rem; padding: var(--s2); border: 1px solid var(--line); border-radius: var(--radius-m); }
 .order-item__top, .order-item__bottom { display: flex; justify-content: space-between; gap: var(--s2); }
-.order-item__top span, .order-item__bottom span, .order-item > p { color: var(--ink-soft); }
+.order-item__top span, .order-item > p { color: var(--ink-soft); }
 .order-item > p { margin: 0; }
+.order-item__bottom { align-items: center; }
+.order-progress { position: relative; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); width: min(100%, 420px); padding-top: 0.1rem; color: var(--ink-soft); font-size: var(--step--1); text-transform: capitalize; }
+.order-progress__track { position: absolute; top: 0.42rem; right: 16.666%; left: 16.666%; height: 2px; background: var(--line); }
+.order-progress__track::after { display: block; width: var(--progress); height: 100%; background: var(--indigo); content: ""; transform: scaleX(0); transform-origin: left; animation: order-progress-fill 900ms cubic-bezier(0.2, 0.75, 0.3, 1) forwards; }
+.order-progress__step { position: relative; z-index: 1; display: grid; justify-items: center; gap: 0.3rem; }
+.order-progress__dot { width: 0.75rem; height: 0.75rem; border: 2px solid var(--line); border-radius: 50%; background: var(--paper); }
+.order-progress__step.is-reached { color: var(--ink); font-weight: 700; }
+.order-progress__step.is-reached .order-progress__dot { border-color: var(--indigo); background: var(--indigo); }
+.order-progress__step:last-child.is-reached .order-progress__dot { border-color: var(--turmeric); background: var(--turmeric); }
+.order-progress__cancelled-wrap { display: grid; gap: 0.35rem; margin-right: auto; }
+.order-progress__cancelled-row { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.6rem; }
+.order-progress__cancelled { margin: 0; color: var(--madder); font-weight: 700; }
+.order-progress__reason-toggle { font-size: var(--step--1); }
+.order-progress__reason { max-width: 34rem; margin: 0; color: var(--ink-soft); font-size: var(--step--1); }
+@keyframes order-progress-fill { to { transform: scaleX(1); } }
+@media (prefers-reduced-motion: reduce) {
+  .order-progress__track::after { animation: none; transform: none; }
+}
 .account__empty { color: var(--ink-soft); }
 .account-gate, .checkout-gate { display: grid; justify-items: start; gap: var(--s2); }
 .checkout__empty { display: grid; justify-items: start; align-content: start; gap: var(--s2); }

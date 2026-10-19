@@ -243,7 +243,7 @@ export async function saveCart(req, res) {
 
 export async function orderHistory(req, res) {
   const orders = await Order.find({ user: req.user.id })
-    .select("customer items total status createdAt")
+    .select("customer items total status cancellationReason createdAt")
     .sort({ createdAt: -1 })
     .limit(100)
     .lean();

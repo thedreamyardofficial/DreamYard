@@ -36,6 +36,10 @@
 .adm__inline { display: flex; gap: 0.5rem; }
 .adm__num { width: 90px; }
 .adm__select { width: auto; padding: 0.35rem 0.6rem; }
+.adm__order-status { display: grid; justify-items: start; gap: 0.4rem; min-width: 180px; }
+.adm__reason-label { font-size: 0.82rem; font-weight: 700; }
+.adm__reason-input { min-width: 180px; resize: vertical; }
+.adm__reason-save { padding: 0.35rem 0.65rem; font-size: 0.85rem; }
 .adm__form { max-width: 620px; }
 .low { color: var(--madder); font-weight: 700; }
 .danger { color: var(--madder); }

@@ -52,7 +52,7 @@ export const adminApi = {
   saveCategory: (id, body) => request(id ? `/categories/${id}` : "/categories", { method: id ? "PUT" : "POST", body }),
   deleteCategory: (id) => request(`/categories/${id}`, { method: "DELETE" }),
   orders: () => request("/orders"),
-  setOrderStatus: (id, status) => request(`/orders/${id}/status`, { method: "PATCH", body: { status } }),
+  setOrderStatus: (id, status, cancellationReason = "") => request(`/orders/${id}/status`, { method: "PATCH", body: { status, cancellationReason } }),
   deleteOrder: (id) => request(`/orders/${id}`, { method: "DELETE" }),
   users: () => request("/users"),
   deleteUser: (id) => request(`/users/${id}`, { method: "DELETE" }),
