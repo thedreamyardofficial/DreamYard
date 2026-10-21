@@ -28,6 +28,8 @@ const userSchema = new mongoose.Schema(
     passwordHash: { type: String, select: false },
     googleId: { type: String, unique: true, sparse: true },
     googleAvatarUrl: { type: String, default: "", maxlength: 2048 },
+    ageConfirmedAt: { type: Date, default: null },
+    policiesAcceptedAt: { type: Date, default: null },
     addresses: {
       type: [addressSchema],
       default: [],

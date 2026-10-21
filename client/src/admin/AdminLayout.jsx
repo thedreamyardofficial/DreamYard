@@ -9,6 +9,7 @@ const LINKS = [
   ["/orders", "Orders"],
   ["/users", "Users"],
   ["/settings", "Site settings"],
+  ["/policies", "Legal pages"],
 ];
 
 export default function AdminLayout() {

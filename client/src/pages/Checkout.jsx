@@ -159,6 +159,7 @@ export default function Checkout() {
       <div className="container section confirm">
         <h1>Order placed</h1>
         <p>Thank you, {order.customer.name}. Your order <strong>#{order._id.slice(-6)}</strong> for {rupees(order.total)} is being packed.</p>
+        <p>Tracking details will be added here after your order is shipped.</p>
         <Link to="/shop" className="btn btn--solid">Keep shopping</Link>
       </div>
     );

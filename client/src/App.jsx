@@ -6,7 +6,7 @@ import Shop from "./pages/Shop.jsx";
 import ProductPage from "./pages/ProductPage.jsx";
 import Checkout from "./pages/Checkout.jsx";
 import Account from "./pages/Account.jsx";
-import PrivacyPolicy from "./pages/PrivacyPolicy.jsx";
+import LegalPage from "./pages/LegalPage.jsx";
 import AdminApp from "./admin/AdminApp.jsx";
 
 export default function App() {
@@ -21,7 +21,10 @@ export default function App() {
         <Route path="/product/:slug" element={<ProductPage />} />
         <Route path="/checkout" element={<Checkout />} />
         <Route path="/account" element={<Account />} />
-        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+        <Route path="/terms" element={<LegalPage pageKey="termsContent" title="Terms and Conditions" />} />
+        <Route path="/privacy-policy" element={<LegalPage pageKey="privacyContent" title="Privacy Policy" />} />
+        <Route path="/shipping-returns" element={<LegalPage pageKey="shippingReturnsContent" title="Shipping, Returns and Refunds" />} />
+        <Route path="/contact" element={<LegalPage pageKey="contactGrievanceContent" title="Contact and Grievance Officer" />} />
         <Route path="*" element={<p className="empty">That page doesn't exist.</p>} />
       </Route>
     </Routes>

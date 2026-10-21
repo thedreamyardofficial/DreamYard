@@ -10,6 +10,7 @@ import * as orders from "../controllers/admin/orderAdmin.js";
 import * as settings from "../controllers/admin/settingsAdmin.js";
 import * as dashboard from "../controllers/admin/dashboardAdmin.js";
 import * as users from "../controllers/admin/userAdmin.js";
+import * as tracking from "../controllers/trackingController.js";
 
 const router = Router();
 
@@ -40,9 +41,16 @@ router.delete("/categories/:id", h(categories.remove));
 
 router.get("/orders", h(orders.list));
 router.patch("/orders/:id/status", h(orders.setStatus));
+router.patch("/orders/tracking/swap", h(tracking.swapOrderTracking));
+router.patch("/orders/:id/tracking/existing", h(tracking.useExistingTrackingRecord));
+router.patch("/orders/:id/tracking/manual", h(tracking.saveManualTrackingDetails));
+router.patch("/orders/:id/tracking/visibility", h(tracking.setCustomerTrackingVisibility));
+router.patch("/orders/:id/tracking", h(tracking.confirmTracking));
+router.get("/orders/:id/tracking", h(tracking.refreshAdminTracking));
 router.delete("/orders/:id", h(orders.remove));
 
 router.get("/users", h(users.list));
+router.get("/users/:id", h(users.details));
 router.delete("/users/:id", h(users.remove));
 
 router.put("/settings", h(settings.update));

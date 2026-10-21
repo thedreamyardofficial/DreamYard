@@ -9,6 +9,7 @@ import ProductsAdmin from "./pages/ProductsAdmin.jsx";
 import SectionsAdmin from "./pages/SectionsAdmin.jsx";
 import OrdersAdmin from "./pages/OrdersAdmin.jsx";
 import SettingsAdmin from "./pages/SettingsAdmin.jsx";
+import PoliciesAdmin from "./pages/PoliciesAdmin.jsx";
 import UsersAdmin from "./pages/UsersAdmin.jsx";
 
 function RequireAdmin() {
@@ -36,6 +37,7 @@ export default function AdminApp() {
           <Route path="orders" element={<OrdersAdmin />} />
           <Route path="users" element={<UsersAdmin />} />
           <Route path="settings" element={<SettingsAdmin />} />
+          <Route path="policies" element={<PoliciesAdmin />} />
         </Route>
         <Route path="*" element={<Navigate to={ADMIN_BASE} replace />} />
       </Routes>

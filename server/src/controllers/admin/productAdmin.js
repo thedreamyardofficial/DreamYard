@@ -10,6 +10,16 @@ const parseSizes = (v) => {
 };
 
 async function buildFields(body, res) {
+  const inputImages = Array.isArray(body.images) && body.images.length
+    ? body.images
+    : body.image
+    ? [body.image]
+    : [];
+  const images = [...new Set(inputImages.map((image) => typeof image === "string" ? image.trim() : "").filter(Boolean))];
+  if (images.length < 1 || images.length > 10) {
+    res.status(400);
+    throw new Error("Add between 1 and 10 product images.");
+  }
   const fields = {
     name: body.name?.trim(),
     category: body.category,
@@ -17,7 +27,8 @@ async function buildFields(body, res) {
     fabric: body.fabric?.trim() || "",
     description: body.description?.trim() || "",
     sizes: parseSizes(body.sizes),
-    image: body.image?.trim() || "",
+    image: images[0],
+    images,
     stock: Math.max(0, Math.floor(Number(body.stock) || 0)),
     featured: Boolean(body.featured),
     published: body.published !== false,
@@ -41,8 +52,13 @@ export async function create(req, res) {
 
 export async function update(req, res) {
   const fields = await buildFields(req.body, res);
-  const product = await Product.findByIdAndUpdate(req.params.id, fields, { new: true, runValidators: true });
+  const product = await Product.findById(req.params.id);
   if (!product) { res.status(404); throw new Error("Product not found."); }
+  const previousImages = [...new Set([product.image, ...(product.images || [])].filter(Boolean))];
+  Object.assign(product, fields);
+  await product.save();
+  const removedImages = previousImages.filter((image) => !fields.images.includes(image));
+  await Promise.all(removedImages.map(deleteFromCloudinary));
   res.json(product);
 }
 
@@ -50,9 +66,8 @@ export async function remove(req, res) {
   const product = await Product.findById(req.params.id);
   if (!product) { res.status(404); throw new Error("Product not found."); }
 
-  if (product.image) {
-    await deleteFromCloudinary(product.image);
-  }
+  const images = [...new Set([product.image, ...(product.images || [])].filter(Boolean))];
+  await Promise.all(images.map(deleteFromCloudinary));
 
   await Product.findByIdAndDelete(req.params.id);
   res.json({ ok: true });

@@ -30,6 +30,7 @@ export const env = {
   razorpayEnabled: process.env.RAZORPAY_ENABLED === "true",
   razorpayKeyId: process.env.RAZORPAY_KEY_ID || "",
   razorpayKeySecret: process.env.RAZORPAY_KEY_SECRET || "",
+  trackingProviderApiKey: process.env.SHIP24_API_KEY || "",
   clientOrigins: (process.env.CLIENT_ORIGIN || "http://localhost:5173")
     .split(",")
     .map((s) => s.trim().replace(/\/$/, ""))

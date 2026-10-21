@@ -3,9 +3,11 @@ import { Link, useLocation } from "react-router-dom";
 import { api, rupees } from "../api/client.js";
 import { useCart } from "../context/CartContext.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
+import TrackingDetails from "../components/TrackingDetails.jsx";
 
 const EMPTY_ADDRESS = { name: "", email: "", phone: "", address: "", city: "", pincode: "" };
 const ORDER_STAGES = ["placed", "shipped", "delivered"];
+const TRACKING_REFRESH_INTERVAL_MS = 3 * 60 * 1000;
 const ADDRESS_FIELDS = [
   ["name", "Recipient name", "text", "name"],
   ["email", "Recipient email", "email", "email"],
@@ -25,20 +27,83 @@ export default function Account() {
   const [orders, setOrders] = useState([]);
   const [visibleCancellationReasons, setVisibleCancellationReasons] = useState({});
   const [ordersError, setOrdersError] = useState("");
+  const [trackingRefreshing, setTrackingRefreshing] = useState({});
+  const [trackingErrors, setTrackingErrors] = useState({});
   const [avatarFailed, setAvatarFailed] = useState(false);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
   const [signOutError, setSignOutError] = useState("");
+  const trackedOrderIds = orders
+    .filter((order) => order.trackingVisibleToCustomer !== false && order.tracking?.trackingNumber && order.tracking?.trackerId)
+    .map((order) => order._id)
+    .join(",");
 
   useEffect(() => {
     if (!user || !token) return undefined;
     let active = true;
-    api.orders(token)
-      .then(({ orders: history }) => { if (active) setOrders(history); })
-      .catch((err) => { if (active) setOrdersError(err.message); });
-    return () => { active = false; };
+    let loadingOrders = false;
+    const loadOrders = async () => {
+      if (loadingOrders) return;
+      loadingOrders = true;
+      try {
+        const { orders: history } = await api.orders(token);
+        if (active) {
+          setOrders(history);
+          setOrdersError("");
+        }
+      } catch (err) {
+        if (active) setOrdersError(err.message);
+      } finally {
+        loadingOrders = false;
+      }
+    };
+    void loadOrders();
+    const timer = window.setInterval(loadOrders, TRACKING_REFRESH_INTERVAL_MS);
+    return () => {
+      active = false;
+      window.clearInterval(timer);
+    };
   }, [user?._id, token]);
+
+  useEffect(() => {
+    if (!user || !token || !trackedOrderIds) return undefined;
+    let active = true;
+    let refreshing = false;
+    const orderIds = trackedOrderIds.split(",");
+    const refresh = async () => {
+      if (refreshing || document.visibilityState !== "visible") return;
+      refreshing = true;
+      await Promise.all(orderIds.map(async (orderId) => {
+        setTrackingRefreshing((current) => ({ ...current, [orderId]: true }));
+        try {
+          const result = await api.orderTracking(orderId, token);
+          if (!active) return;
+          if (result.visible === false) {
+            setOrders((current) => current.map((order) => order._id === orderId
+              ? { ...order, trackingVisibleToCustomer: false }
+              : order));
+            setTrackingErrors((current) => ({ ...current, [orderId]: "" }));
+            return;
+          }
+          // console.log("[tracking refresh]", { userId: user._id, orderId, tracking: result.tracking });
+          setOrders((current) => current.map((order) => order._id === orderId ? { ...order, tracking: result.tracking } : order));
+          setTrackingErrors((current) => ({ ...current, [orderId]: "" }));
+        } catch (refreshError) {
+          if (active) setTrackingErrors((current) => ({ ...current, [orderId]: refreshError.message }));
+        } finally {
+          if (active) setTrackingRefreshing((current) => ({ ...current, [orderId]: false }));
+        }
+      }));
+      refreshing = false;
+    };
+    void refresh();
+    const timer = window.setInterval(refresh, TRACKING_REFRESH_INTERVAL_MS);
+    return () => {
+      active = false;
+      window.clearInterval(timer);
+    };
+  }, [user?._id, token, trackedOrderIds]);
 
   useEffect(() => setAvatarFailed(false), [user?.googleAvatarUrl]);
 
@@ -255,6 +320,17 @@ export default function Account() {
                   )}
                   <strong>{rupees(order.total)}</strong>
                 </div>
+                {order.trackingVisibleToCustomer !== false && (
+                  <section className="order-item__tracking" aria-label={`Tracking details for order ${order._id.slice(-6)}`}>
+                    <h3>Shipment tracking</h3>
+                    <TrackingDetails
+                      tracking={order.tracking}
+                      loading={Boolean(trackingRefreshing[order._id])}
+                      refreshError={order.tracking?.lastRefreshError || trackingErrors[order._id]}
+                      emptyMessage="Your order is confirmed. Tracking details will be added here soon."
+                    />
+                  </section>
+                )}
               </li>
             ))}
           </ul>

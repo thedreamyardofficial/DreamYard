@@ -10,11 +10,13 @@ export default function ProductPage() {
   const { categoryName } = useSite();
   const [product, setProduct] = useState(null);
   const [size, setSize] = useState("");
+  const [selectedImage, setSelectedImage] = useState(0);
   const [error, setError] = useState("");
 
   useEffect(() => {
     setProduct(null);
     setError("");
+    setSelectedImage(0);
     api.product(slug)
       .then((p) => { setProduct(p); setSize(p.sizes[0]); })
       .catch((e) => setError(e.message));
@@ -24,11 +26,35 @@ export default function ProductPage() {
   if (!product) return <div className="container section"><div className="skeleton skeleton--tall" /></div>;
 
   const soldOut = product.stock === 0;
+  const images = Array.isArray(product.images) && product.images.length
+    ? product.images
+    : product.image ? [product.image] : [];
+  const primaryImage = images[0] || product.image;
 
   return (
     <div className="container section product">
-      <div className="product__media">
-        {product.image ? <img src={imgSrc(product.image)} alt={product.name} /> : <div className="card__ph" />}
+      <div className="product__gallery">
+        <div className="product__media">
+          {images[selectedImage] || primaryImage
+            ? <img src={imgSrc(images[selectedImage] || primaryImage)} alt={product.name} />
+            : <div className="card__ph" />}
+        </div>
+        {images.length > 1 && (
+          <div className="product__thumbnails" aria-label="Product images">
+            {images.map((image, index) => (
+              <button
+                className={`product__thumbnail${selectedImage === index ? " is-active" : ""}`}
+                type="button"
+                key={`${image}-${index}`}
+                onClick={() => setSelectedImage(index)}
+                aria-label={`Show product image ${index + 1}`}
+                aria-pressed={selectedImage === index}
+              >
+                <img src={imgSrc(image)} alt="" loading="lazy" />
+              </button>
+            ))}
+          </div>
+        )}
       </div>
       <div className="product__info">
         <Link to={`/shop?category=${product.category}`} className="link-btn">← {categoryName(product.category)}</Link>
@@ -47,7 +73,7 @@ export default function ProductPage() {
         <button
           className="btn btn--solid"
           disabled={soldOut}
-          onClick={() => add({ productId: product._id, name: product.name, price: product.price, size, image: product.image })}
+          onClick={() => add({ productId: product._id, name: product.name, price: product.price, size, image: primaryImage })}
         >
           {soldOut ? "Sold out" : "Add to bag"}
         </button>

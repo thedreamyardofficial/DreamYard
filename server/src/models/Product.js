@@ -10,6 +10,11 @@ const productSchema = new mongoose.Schema(
     description: { type: String, default: "" },
     sizes: { type: [String], default: ["S", "M", "L", "XL"] },
     image: { type: String, default: "" }, // URL or /uploads/... path
+    images: {
+      type: [String],
+      default: [],
+      validate: { validator: (images) => images.length <= 10, message: "A product can have up to 10 images." },
+    },
     stock: { type: Number, default: 0, min: 0 },
     featured: { type: Boolean, default: false },
     published: { type: Boolean, default: true, index: true },

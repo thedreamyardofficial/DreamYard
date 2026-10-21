@@ -1,4 +1,5 @@
 import { v2 as cloudinary } from "cloudinary";
+import { randomUUID } from "node:crypto";
 import { env } from "./env.js";
 
 cloudinary.config({
@@ -13,7 +14,7 @@ export const uploadToCloudinary = (buffer, filename) =>
       {
         folder: "dreamyard",
         resource_type: "image",
-        public_id: filename.replace(/\.[^/.]+$/, ""),
+        public_id: `${filename.replace(/\.[^/.]+$/, "")}-${randomUUID()}`,
       },
       (error, result) => {
         if (error) return reject(error);

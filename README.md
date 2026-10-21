@@ -33,8 +33,11 @@ There is no link to it anywhere in the store. To change the address, set `VITE_A
 From the admin you can:
 - **Products**: add, edit, delete, hide/show, mark as featured, set stock, upload a photo or paste a URL.
 - **Sections**: create, rename, reorder, delete (the shop menu and filters follow automatically).
-- **Orders**: view details, move through placed → shipped → delivered, cancel (stock is returned), delete.
+- **Orders**: view details, assign shipment Tracking IDs, move through placed → shipped → delivered, cancel (stock is returned), delete.
 - **Site settings**: store name, announcement bar, home headline, footer and contact details.
+
+## Shipment tracking
+Set `SHIP24_API_KEY` in `server/.env`. The key stays on the server and is optional until you use tracking. In Admin > Orders > Details, enter a Tracking ID and choose whether to create a new tracking record, fetch an existing provider record, or provide a carrier link. Admin details and the owning customer's account show the saved carrier, status, estimated delivery, events, and last successful update when provider-backed tracking is used. Active views poll the backend periodically; the backend reuses saved tracking records and limits refreshes per order.
 
 Uploaded photos are saved in `server/uploads/`.
 

@@ -46,7 +46,7 @@ export function AuthProvider({ children }) {
 
   const signIn = (credentials) => authenticate(api.login, credentials);
   const register = (credentials) => authenticate(api.register, credentials);
-  const googleSignIn = (credential) => authenticate(api.googleLogin, credential);
+  const googleSignIn = (details) => authenticate(api.googleLogin, details);
 
   const signOut = () => {
     window.localStorage.removeItem(TOKEN_KEY);

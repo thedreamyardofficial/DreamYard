@@ -11,7 +11,12 @@ export default function Footer() {
         {(settings.contactEmail || settings.contactPhone) && (
           <p>{[settings.contactEmail, settings.contactPhone].filter(Boolean).join("  ·  ")}</p>
         )}
-        <Link className="footer__privacy" to="/privacy-policy">Privacy Policy</Link>
+        <nav className="footer__policies" aria-label="Policies and support">
+          <Link to="/terms">Terms</Link>
+          <Link to="/privacy-policy">Privacy</Link>
+          <Link to="/shipping-returns">Shipping and returns</Link>
+          <Link to="/contact">Contact and grievances</Link>
+        </nav>
         <p className="footer__fine">© {new Date().getFullYear()} {settings.storeName}</p>
       </div>
     </footer>
