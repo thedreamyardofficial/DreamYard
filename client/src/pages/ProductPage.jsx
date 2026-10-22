@@ -78,6 +78,11 @@ export default function ProductPage() {
           {soldOut ? "Sold out" : "Add to bag"}
         </button>
         {!soldOut && product.stock < 6 && <p className="notice">Only {product.stock} left.</p>}
+        <div className="product__trust mono">
+          <span>Delivered across India</span>
+          <span>Secure checkout</span>
+          <Link to="/shipping-returns">Shipping and returns</Link>
+        </div>
       </div>
     </div>
   );

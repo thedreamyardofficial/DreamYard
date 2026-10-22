@@ -3,10 +3,12 @@ import { rupees, imgSrc } from "../api/client.js";
 
 export default function ProductCard({ product }) {
   const primaryImage = product.images?.[0] || product.image;
+  const altImage = product.images?.[1];
   return (
     <Link to={`/product/${product.slug}`} className="card">
       <div className="card__media">
         {primaryImage ? <img src={imgSrc(primaryImage)} alt={product.name} loading="lazy" /> : <div className="card__ph" />}
+        {altImage && <img className="card__alt" src={imgSrc(altImage)} alt="" loading="lazy" />}
         {product.stock === 0 && <span className="card__badge">Sold out</span>}
       </div>
       <div className="card__body">

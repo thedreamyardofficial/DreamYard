@@ -32,7 +32,7 @@ export default function SectionsAdmin() {
   return (
     <>
       <h1 className="adm__title">Sections</h1>
-      <p className="adm__muted">Sections are the groups shoppers see in the menu and filters, such as Sarees or Shirts.</p>
+      <p className="adm__muted">Sections are the groups shoppers see in the menu and filters, such as T-shirts or Hoodies.</p>
       {error && <p className="notice notice--error">{error}</p>}
 
       <div className="adm__card">

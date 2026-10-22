@@ -12,6 +12,7 @@ import "./styles/base.css";
 import "./styles/components.css";
 import "./styles/startupIntro.css";
 import "./styles/pages.css";
+import "./styles/premium.css";
 import "./styles/admin.css";
 
 const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || "";

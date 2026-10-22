@@ -186,7 +186,7 @@ export default function ProductForm({ product, categories, onSaved, onCancel }) 
                 </select>
               </label>
               <label className="label">Fabric
-                <input className="field" value={form.fabric} onChange={set("fabric")} placeholder="Handloom cotton" />
+                <input className="field" value={form.fabric} onChange={set("fabric")} placeholder="100% cotton" />
               </label>
               <label className="label">Price (₹)
                 <input className="field" type="number" min="0" required value={form.price} onChange={set("price")} />

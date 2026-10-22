@@ -3,6 +3,7 @@ import { Link, NavLink, useNavigate } from "react-router-dom";
 import { useCart } from "../context/CartContext.jsx";
 import { useSite } from "../context/SiteContext.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
+import Logo from "./Logo.jsx";
 
 export default function Navbar() {
   const { count, setOpen, flushCart } = useCart();
@@ -55,7 +56,7 @@ export default function Navbar() {
       {settings.announcement && <div className="announce">{settings.announcement}</div>}
       <header className="nav">
         <div className="container nav__inner">
-          <Link to="/" className="nav__logo">{settings.storeName}</Link>
+          <Link to="/" className="nav__logo" aria-label={settings.storeName}><Logo variant="word" /></Link>
           <nav className="nav__links" aria-label="Main">
             <NavLink to="/shop" end>Shop</NavLink>
             {categories.slice(0, 3).map((c) => (

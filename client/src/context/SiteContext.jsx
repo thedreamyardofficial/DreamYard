@@ -4,8 +4,8 @@ import { api } from "../api/client.js";
 const DEFAULTS = {
   storeName: "DreamYard",
   announcement: "",
-  heroTitle: "Cloth that remembers the loom.",
-  heroSubtitle: "Handloom clothing, cut to last.",
+  heroTitle: "Wear it oversized.",
+  heroSubtitle: "Oversized tees and hoodies, made for men.",
   footerNote: "",
   contactEmail: "",
   contactPhone: "",

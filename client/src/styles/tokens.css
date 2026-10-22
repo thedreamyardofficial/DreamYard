@@ -1,32 +1,15 @@
 :root {
-  /* Colour: indigo-dyed cloth, turmeric, madder */
-  --indigo: #1b2559;
-  --indigo-deep: #121a42;
-  --mist: #eef1f8;
-  --paper: #fafbfe;
-  --turmeric: #f2b632;
-  --madder: #8e2c25;
-  --ink: #161a33;
-  --ink-soft: #5b6285;
-  --line: #d9deee;
-
-  /* Type */
-  --font-display: "Bricolage Grotesque", system-ui, sans-serif;
-  --font-body: "DM Sans", system-ui, sans-serif;
-
-  /* Type scale (1.25) */
-  --step--1: 0.8rem;
-  --step-0: 1rem;
-  --step-1: 1.25rem;
-  --step-2: 1.56rem;
-  --step-3: 1.95rem;
-  --step-4: clamp(2.4rem, 4vw + 1rem, 3.8rem);
-  --step-5: clamp(3rem, 6vw + 1rem, 5.6rem);
-
-  /* Space + shape */
-  --s1: 0.5rem; --s2: 1rem; --s3: 1.5rem; --s4: 2.5rem; --s5: 4.5rem;
-  --radius-s: 4px;
-  --radius-m: 10px;
-  --radius-pill: 999px;
-  --shadow-lift: 0 18px 40px -18px rgba(18, 26, 66, 0.45);
+  /* Palette: deep ocean navy on white, with a single electric-cyan accent (legacy names kept for admin/checkout) */
+  --indigo: #03045e; --indigo-deep: #020338; --mist: #eaf8fc; --paper: #ffffff;
+  --turmeric: #00b4d8; --madder: #b3261e; --ink: #0a0d3a; --ink-soft: #596084; --line: #dbe7ee;
+  --navy: #03045e; --blue: #0077b6; --cyan: #00b4d8; --sky: #caf0f8; --tint: #f2fbfe;
+  --font-display: "Instrument Sans", system-ui, sans-serif;
+  --font-body: "Instrument Sans", system-ui, sans-serif;
+  --font-mono: "DM Mono", ui-monospace, monospace;
+  --step--1: 0.8rem; --step-0: 1rem; --step-1: 1.3rem; --step-2: 1.7rem; --step-3: 2.2rem;
+  --step-4: clamp(2.8rem, 5vw + 1rem, 5.4rem); --step-5: clamp(3.4rem, 9vw, 8.4rem);
+  --s1: 0.5rem; --s2: 1rem; --s3: 1.5rem; --s4: 2.5rem; --s5: 6rem;
+  --radius-s: 8px; --radius-m: 14px; --radius-pill: 999px;
+  --shadow-lift: 0 24px 50px -24px rgba(3, 4, 94, 0.35);
+  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
 }

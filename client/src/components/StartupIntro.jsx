@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { ADMIN_BASE, SHOW_INTRO } from "../config.js";
+import Logo from "./Logo.jsx";
 
 export default function StartupIntro() {
   const { pathname } = useLocation();
@@ -9,7 +10,6 @@ export default function StartupIntro() {
 
   useEffect(() => {
     if (!SHOW_INTRO) return;
-
     const timeout = window.setTimeout(() => setVisible(false), 2800);
     return () => window.clearTimeout(timeout);
   }, []);
@@ -17,13 +17,13 @@ export default function StartupIntro() {
   if (!visible || isAdmin) return null;
 
   return (
-    <div className="startup-intro" role="status" aria-label="DreamYard is loading">
-      <div className="startup-intro__lockup" aria-label="the dream yard store">
-        <span className="startup-intro__the">the</span>
-        <span className="startup-intro__dream">dream</span>
-        <span className="startup-intro__yard">yard</span>
-        <span className="startup-intro__store">store</span>
+    <div className="startup-intro" role="status" aria-label="Dream Yard is loading">
+      <div className="startup-intro__logo lockup">
+        <span className="lockup__the">the</span>
+        <Logo variant="word" draw />
+        <span className="lockup__store">store</span>
       </div>
+      <p className="startup-intro__sub eyebrow">Menswear</p>
     </div>
   );
 }

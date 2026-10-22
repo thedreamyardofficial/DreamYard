@@ -40,7 +40,8 @@ export default function Shop() {
 
   return (
     <div className="container section">
-      <h1 className="page-title">Shop</h1>
+      <h1 className="page-title">The <em>Collection</em></h1>
+      {!loading && !error && <p className="shop-count">{products.length} {products.length === 1 ? "piece" : "pieces"}</p>}
 
       <div className="toolbar">
         <div className="pills" role="group" aria-label="Section">

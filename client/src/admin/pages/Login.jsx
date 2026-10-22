@@ -1,3 +1,4 @@
+import Logo from "../../components/Logo.jsx";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ADMIN_BASE } from "../../config.js";
@@ -26,11 +27,10 @@ export default function Login() {
 
   return (
     <div className="adm__login">
-      <div className="startup-intro__lockup adm__login-brand" aria-label="the dream yard store">
-        <span className="startup-intro__the">the</span>
-        <span className="startup-intro__dream">dream</span>
-        <span className="startup-intro__yard">yard</span>
-        <span className="startup-intro__store">store</span>
+      <div className="lockup adm__login-brand" aria-label="the dream yard store">
+        <span className="lockup__the">the</span>
+        <Logo variant="word" />
+        <span className="lockup__store">store</span>
       </div>
       <form onSubmit={submit} className="adm__card adm__login-card">
         <h1>Admin sign in</h1>
