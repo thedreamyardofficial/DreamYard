@@ -4,3 +4,4 @@ dist
 upload.sh
 GitHubUpload.ps1
 .git-upload-config.json
+.txt

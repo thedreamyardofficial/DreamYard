@@ -15,6 +15,29 @@ const ADDRESS_FIELDS = [
   ["pincode", "Pincode", "text"],
 ];
 
+const PENDING_PAYMENT_KEY = "dream-yard-pending-payment";
+const PENDING_PAYMENT_MAX_AGE_MS = 24 * 60 * 60 * 1000;
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+// Remembers a checkout that has been opened so an order whose confirmation never reached the browser can still be found.
+function rememberPendingPayment(razorpayOrderId) {
+  try {
+    window.localStorage.setItem(PENDING_PAYMENT_KEY, JSON.stringify({ id: razorpayOrderId, at: Date.now() }));
+  } catch { /* storage may be unavailable; the server and webhooks still protect the payment */ }
+}
+
+function forgetPendingPayment() {
+  try { window.localStorage.removeItem(PENDING_PAYMENT_KEY); } catch { /* ignore */ }
+}
+
+function recallPendingPayment() {
+  try {
+    const saved = JSON.parse(window.localStorage.getItem(PENDING_PAYMENT_KEY) || "null");
+    if (saved?.id && Date.now() - saved.at < PENDING_PAYMENT_MAX_AGE_MS) return saved.id;
+  } catch { /* ignore */ }
+  return "";
+}
+
 let razorpayScriptPromise;
 
 function loadRazorpayScript() {
@@ -62,6 +85,42 @@ export default function Checkout() {
     }
   }, [user, selectedAddressId]);
 
+  // If a payment went through but the browser never heard back (closed tab, lost connection),
+  // the server (webhook) still creates the order. Look for it when the customer returns.
+  useEffect(() => {
+    if (!token || !user) return undefined;
+    const pendingId = recallPendingPayment();
+    if (!pendingId) return undefined;
+    let active = true;
+    api.paymentStatus(pendingId, token)
+      .then((result) => {
+        if (!active) return;
+        if (result.status === "completed") {
+          forgetPendingPayment();
+          setOrder(result.order);
+          clear();
+        } else if (result.status === "refunded" || result.status === "released") {
+          forgetPendingPayment();
+          setError(result.message);
+        }
+      })
+      .catch((err) => { if (active && err.status === 404) forgetPendingPayment(); });
+    return () => { active = false; };
+  }, [token, user?._id]);
+
+  // Polls the server until it has finished the order for a payment that has already been made.
+  const waitForOrder = async (razorpayOrderId, tries = 10) => {
+    for (let i = 0; i < tries; i += 1) {
+      try {
+        const result = await api.paymentStatus(razorpayOrderId, token);
+        if (result.status === "completed") return { order: result.order };
+        if (result.status === "refunded" || result.status === "released") return { message: result.message };
+      } catch { /* the server may be restarting; keep trying */ }
+      await sleep(3000);
+    }
+    return null;
+  };
+
   const set = (key) => (event) => setForm((current) => ({ ...current, [key]: event.target.value }));
 
   const saveAddress = async () => {
@@ -94,8 +153,10 @@ export default function Checkout() {
 
       if (paymentConfig.enabled) {
         const gatewayOrder = await api.createPaymentOrder(checkoutDetails, token);
+        rememberPendingPayment(gatewayOrder.orderId);
         await loadRazorpayScript();
         let paymentFailed = false;
+        let paymentSubmitted = false;
         const address = user.addresses.find((entry) => entry._id === selectedAddressId);
         const checkout = new window.Razorpay({
           key: gatewayOrder.keyId,
@@ -111,22 +172,48 @@ export default function Checkout() {
           },
           theme: { color: "#1b2559" },
           handler: async (payment) => {
+            paymentSubmitted = true;
             try {
-              const placed = await api.verifyPayment({
-                razorpayOrderId: payment.razorpay_order_id,
-                razorpayPaymentId: payment.razorpay_payment_id,
-                razorpaySignature: payment.razorpay_signature,
-              }, token);
+              let placed;
+              try {
+                placed = await api.verifyPayment({
+                  razorpayOrderId: payment.razorpay_order_id,
+                  razorpayPaymentId: payment.razorpay_payment_id,
+                  razorpaySignature: payment.razorpay_signature,
+                }, token);
+              } catch (verifyError) {
+                // Network trouble, a server error or "still being confirmed": the money may already be taken,
+                // so ask the server what happened before telling the customer anything.
+                const recoverable = !verifyError.status || verifyError.status >= 500 || verifyError.status === 409;
+                if (!recoverable) {
+                  forgetPendingPayment();
+                  throw verifyError;
+                }
+                const outcome = await waitForOrder(gatewayOrder.orderId);
+                if (outcome?.order) {
+                  placed = outcome.order;
+                } else if (outcome?.message) {
+                  forgetPendingPayment();
+                  throw new Error(outcome.message);
+                } else if (verifyError.status === 409) {
+                  throw verifyError;
+                } else {
+                  throw new Error("We are still confirming your payment. If money was deducted, your order will appear in your account shortly or the amount will be refunded automatically. Please do not pay again.");
+                }
+              }
+              forgetPendingPayment();
+              setError("");
               setOrder(placed);
               clear();
             } catch (err) {
-              setError(`Payment could not be verified, so no order was placed. ${err.message} Please try again.`);
+              setError(err.message);
             } finally {
               setBusy(false);
             }
           },
           modal: {
             ondismiss: () => {
+              if (paymentSubmitted) return;
               setBusy(false);
               if (!paymentFailed) setError("Payment was cancelled. No order was placed. You can try again.");
             },

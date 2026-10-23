@@ -8,6 +8,9 @@ const TRACKING_REFRESH_INTERVAL_MS = 3 * 60 * 1000;
 
 const formatDateTime = (value) => value ? new Date(value).toLocaleString("en-IN") : "Not available";
 const showValue = (value) => value == null || value === "" ? "Not available" : value;
+const PAYMENT_STATUS_LABELS = { captured: "Captured", partially_refunded: "Partially refunded", refunded: "Refunded" };
+const paymentStatusLabel = (order) => order.paymentMethod === "razorpay" ? PAYMENT_STATUS_LABELS[order.paymentStatus] || "Captured" : "Due on delivery";
+const paiseToText = (paise) => (Number(paise) / 100).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 export default function OrdersAdmin() {
   const [orders, setOrders] = useState([]);
@@ -525,7 +528,8 @@ export default function OrdersAdmin() {
                               <h3>Payment</h3>
                               <dl className="adm__order-detail-grid">
                                 <div><dt>Payment method</dt><dd>{o.paymentMethod === "razorpay" ? "Razorpay" : "Pay on delivery"}</dd></div>
-                                <div><dt>Payment status</dt><dd>{o.paymentMethod === "razorpay" ? "Captured" : "Due on delivery"}</dd></div>
+                                <div><dt>Payment status</dt><dd>{paymentStatusLabel(o)}</dd></div>
+                                {o.refundedAmount > 0 && <div><dt>Refunded amount</dt><dd>{`${showValue(o.paymentCurrency)} ${paiseToText(o.refundedAmount)}`}</dd></div>}
                                 <div><dt>Paid amount</dt><dd>{o.paymentAmount != null ? `${showValue(o.paymentCurrency)} ${(Number(o.paymentAmount) / 100).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "Not available"}</dd></div>
                                 <div><dt>Razorpay order ID</dt><dd>{showValue(o.razorpayOrderId)}</dd></div>
                                 <div><dt>Razorpay payment ID</dt><dd>{showValue(o.razorpayPaymentId)}</dd></div>

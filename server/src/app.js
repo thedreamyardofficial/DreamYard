@@ -9,6 +9,7 @@ import { uploadsDir } from "./middleware/upload.js";
 import productRoutes from "./routes/productRoutes.js";
 import storeRoutes from "./routes/storeRoutes.js";
 import orderRoutes from "./routes/orderRoutes.js";
+import webhookRoutes from "./routes/webhookRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
 import { notFound, errorHandler } from "./middleware/error.js";
@@ -28,6 +29,9 @@ app.use(helmet({
   },
 }));
 app.use(compression());
+// Webhooks need the untouched request body to check Razorpay's signature, so they are mounted
+// before express.json() and are not subject to CORS (Razorpay calls the server directly).
+app.use("/api/webhooks", webhookRoutes);
 app.use(
   cors({
     origin(origin, cb) {

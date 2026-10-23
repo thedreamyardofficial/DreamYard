@@ -1,0 +1,221 @@
+DREAMYARD PROJECT FILES AND ARCHITECTURE
+========================================
+
+Generated from the current workspace structure.
+
+PROJECT OVERVIEW
+----------------
+DreamYard is a clothing store application with a React/Vite client and an
+Express/Mongoose server. The browser communicates with the server over the
+/API routes. The server connects to MongoDB; it also integrates with external
+services for payments, image hosting, Google sign-in, and shipment tracking.
+
+ARCHITECTURE DIAGRAM
+--------------------
+
+  Shopper / Administrator
+            |
+            | Browser: React app, routes, shared contexts
+            v
+  +--------------------------+
+  | client/                  |
+  | Vite development server  |
+  | localhost:5173           |
+  +--------------------------+
+            |
+            | /api/* and /uploads/*
+            | Vite proxy in development
+            v
+  +--------------------------+
+  | server/                  |
+  | Express API              |
+  | localhost:5000           |
+  +--------------------------+
+      |          |          |
+      |          |          +---- Cloudinary image service
+      |          +--------------- Razorpay payment service
+      +-------------------------- MongoDB Atlas
+      |
+      +-------------------------- Ship24 tracking service
+      +-------------------------- Google OAuth verification
+
+  Client request flow:
+    Page / Component -> Context or API helper -> Express route
+    -> Middleware -> Controller -> Mongoose Model -> MongoDB
+    -> JSON response -> Client UI
+
+  Admin request flow:
+    Admin page -> adminApi.js -> /api/admin route
+    -> admin authentication middleware -> admin controller
+    -> Mongoose Model -> MongoDB
+
+ROOT FILES
+----------
+
+DreamYard/
+  .git-upload-config.json     Git upload/deployment helper configuration
+  .gitignore                  Files and folders Git should ignore
+  GitHubUpload.ps1            PowerShell GitHub upload helper
+  package.json                Root scripts; runs client and server together
+  README.md                   Setup and project documentation
+  PROJECT_ARCHITECTURE.txt    This architecture and file inventory
+
+CLIENT FILES
+------------
+
+client/
+  .env                        Local client environment values (private)
+  .env.example                Client environment template
+  index.html                  Vite HTML document and React mount element
+  package.json                Client scripts and dependencies
+  package-lock.json           Locked client dependency versions
+  vercel.json                 Vercel deployment/routing configuration
+  vite.config.js              Vite configuration and local API/upload proxy
+
+  public/
+    favicon.svg               Browser tab icon
+    brand/
+      dreamyard-wordmark-dark.svg   Dark wordmark asset
+      dreamyard-wordmark-light.svg  Light wordmark asset
+
+  src/
+    main.jsx                  React entry point; providers, router, global CSS
+    App.jsx                   Public and admin route definitions
+    config.js                 Client runtime configuration
+
+    api/
+      client.js               Shared API request helper
+
+    context/
+      AuthContext.jsx         Customer authentication state/actions
+      CartContext.jsx         Shopping cart state/actions
+      SiteContext.jsx         Store settings and shared site data
+
+    layouts/
+      PublicLayout.jsx        Shared public storefront layout
+
+    components/
+      AuthDialog.jsx          Sign-in/sign-up dialog
+      CartDrawer.jsx          Shopping cart drawer
+      Footer.jsx              Store footer
+      Logo.jsx                Brand logo component
+      Navbar.jsx              Store navigation
+      ProductCard.jsx         Product listing card
+      StartupIntro.jsx        Startup intro presentation
+      Swatch.jsx              Product color swatch
+      TrackingDetails.jsx     Shipment tracking details display
+
+    pages/
+      Account.jsx             Customer account and order history
+      Checkout.jsx            Checkout and payment flow
+      Home.jsx                Store homepage
+      LegalPage.jsx           Configurable legal/content page
+      ProductPage.jsx         Product details page
+      Shop.jsx                Product catalog and filters
+
+    admin/
+      AdminApp.jsx             Admin routes and application shell
+      AdminLayout.jsx          Shared admin navigation/layout
+      ProductForm.jsx          Product create/edit form
+      adminApi.js              Admin-specific API helper
+
+      pages/
+        Dashboard.jsx          Admin overview and statistics
+        Login.jsx              Admin sign-in
+        OrdersAdmin.jsx        Order management and tracking
+        PoliciesAdmin.jsx      Store policy management
+        ProductsAdmin.jsx      Product management
+        SectionsAdmin.jsx      Section/category management
+        SettingsAdmin.jsx      Store settings management
+        UsersAdmin.jsx         Customer management
+
+    styles/
+      admin.css                Admin area styles
+      base.css                 Global/reset styles
+      components.css           Shared component styles
+      pages.css                Store page styles
+      premium.css              Additional storefront visual styles
+      startupIntro.css         Startup intro styles
+      tokens.css               Design tokens and CSS variables
+
+SERVER FILES
+------------
+
+server/
+  .env                        Local server secrets/configuration (private)
+  .env.example                Server environment variable template
+  .gitignore                  Server-specific Git ignore rules
+  package.json                Server scripts and dependencies
+  package-lock.json           Locked server dependency versions
+
+  src/
+    server.js                 Starts server, connects database, handles shutdown
+    app.js                    Configures Express middleware and mounts API routes
+
+    config/
+      cloudinary.js           Cloudinary integration configuration
+      db.js                   MongoDB connection setup
+      env.js                  Reads and validates server environment settings
+      razorpay.js             Razorpay integration configuration
+
+    middleware/
+      auth.js                 Admin authorization middleware
+      error.js                Async wrapper and centralized API error handling
+      upload.js               Product image upload handling and uploads directory
+      userAuth.js             Customer authorization middleware
+
+    models/
+      Category.js             Store section/category database model
+      Order.js                Customer order database model
+      PaymentAttempt.js       Payment attempt database model
+      Product.js              Product database model
+      Settings.js             Store settings database model
+      User.js                 Customer database model
+
+    routes/
+      adminRoutes.js           Protected admin API routes
+      authRoutes.js            Customer authentication routes
+      orderRoutes.js           Checkout/order routes
+      productRoutes.js         Product catalog routes
+      storeRoutes.js           Store content/settings routes
+
+    controllers/
+      authController.js        Customer authentication operations
+      orderController.js       Order creation and customer order operations
+      productController.js     Public product listing/details
+      storeController.js       Public store sections/settings/policies
+      trackingController.js    Shipment tracking operations
+
+      admin/
+        authController.js      Admin sign-in and identity operations
+        categoryAdmin.js       Admin section/category CRUD operations
+        dashboardAdmin.js      Admin dashboard stats and image upload actions
+        orderAdmin.js          Admin order management
+        productAdmin.js        Admin product management
+        settingsAdmin.js       Admin store settings operations
+        userAdmin.js           Admin customer management
+
+    utils/
+      settings.js              Store settings defaults/helpers
+      slugify.js               URL-safe unique slug helpers
+      trackingProvider.js      Shipment provider integration and normalization
+
+ENVIRONMENT AND OMITTED FILES
+-----------------------------
+
+The actual .env files are local and contain private credentials. They are
+listed by filename above, but their contents are intentionally not included.
+Never commit or share real secrets. Use the .env.example files as templates.
+
+Generated/dependency directories such as node_modules/ and client/dist/ are
+not expanded in this inventory. They are created by installs/builds and are
+not application source files. Runtime uploads, if present, are generated data
+and are not listed here.
+
+MAIN LOCAL COMMANDS
+-------------------
+
+  npm run dev                 Start client and server from the root
+  npm run dev --prefix server Start the API only
+  npm run dev --prefix client Start the Vite client only
+  npm run build --prefix client Build the client for production

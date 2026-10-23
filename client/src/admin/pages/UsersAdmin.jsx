@@ -4,6 +4,7 @@ import { rupees } from "../../api/client.js";
 
 const formatDateTime = (value) => value ? new Date(value).toLocaleString("en-IN") : "Not recorded";
 const showValue = (value) => value == null || value === "" ? "Not available" : value;
+const PAYMENT_STATUS_LABELS = { captured: "Captured", partially_refunded: "Partially refunded", refunded: "Refunded" };
 
 export default function UsersAdmin() {
   const [users, setUsers] = useState([]);
@@ -169,7 +170,7 @@ export default function UsersAdmin() {
                                           <div><dt>Placed</dt><dd>{formatDateTime(order.createdAt)}</dd></div>
                                           <div><dt>Total</dt><dd>{rupees(order.total)}</dd></div>
                                           <div><dt>Payment method</dt><dd>{showValue(order.paymentMethod)}</dd></div>
-                                          <div><dt>Payment status</dt><dd>{order.paymentMethod === "razorpay" ? "Captured" : "Due on delivery"}</dd></div>
+                                          <div><dt>Payment status</dt><dd>{order.paymentMethod === "razorpay" ? PAYMENT_STATUS_LABELS[order.paymentStatus] || "Captured" : "Due on delivery"}</dd></div>
                                           <div><dt>Paid amount</dt><dd>{order.paymentAmount != null ? `${showValue(order.paymentCurrency)} ${(Number(order.paymentAmount) / 100).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "Not available"}</dd></div>
                                           <div><dt>Payment reference</dt><dd>{showValue(order.razorpayPaymentId || order.razorpayOrderId)}</dd></div>
                                           <div><dt>Recipient</dt><dd>{showValue(order.customer?.name)}</dd></div>

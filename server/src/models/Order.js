@@ -67,6 +67,9 @@ const orderSchema = new mongoose.Schema(
     razorpayMethod: String,
     paymentAmount: Number,
     paymentCurrency: String,
+    // Only set for Razorpay orders. Kept in sync by the refund webhooks.
+    paymentStatus: { type: String, enum: ["captured", "partially_refunded", "refunded"] },
+    refundedAmount: { type: Number, min: 0, default: 0 }, // in paise
   },
   { timestamps: true }
 );

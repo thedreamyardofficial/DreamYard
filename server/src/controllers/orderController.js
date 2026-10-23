@@ -1,17 +1,37 @@
-import { createHmac, timingSafeEqual } from "node:crypto";
+import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
+import mongoose from "mongoose";
 import Order from "../models/Order.js";
 import PaymentAttempt from "../models/PaymentAttempt.js";
 import Product from "../models/Product.js";
 import User from "../models/User.js";
 import { env } from "../config/env.js";
 import { razorpay } from "../config/razorpay.js";
+import { releaseStock, tryReserveStock } from "../utils/stock.js";
+import {
+  finalizePayment,
+  gatewayError,
+  isGatewayId,
+  orderSummary,
+  readSettlement,
+  syncAttempt,
+  toHttpError,
+  toPaise,
+  waitForSettlement,
+  fetchPayment,
+} from "../utils/payments.js";
+
+const MAX_LINES = 50;
 
 export const paymentConfig = (_req, res) => res.json({ enabled: env.razorpayEnabled, keyId: env.razorpayKeyId });
 
 async function prepareOrder(res, userId, addressId, items) {
-  if (!addressId || !Array.isArray(items) || items.length === 0) {
+  if (typeof addressId !== "string" || !Array.isArray(items) || items.length === 0 || items.length > MAX_LINES) {
     res.status(400);
     throw new Error("Select a delivery address and add at least one item.");
+  }
+  if (items.some((i) => !i || typeof i.productId !== "string" || !mongoose.isValidObjectId(i.productId))) {
+    res.status(400);
+    throw new Error("One of the items in your bag is not valid.");
   }
   const account = await User.findById(userId);
   const address = account?.addresses.id(addressId);
@@ -30,8 +50,13 @@ async function prepareOrder(res, userId, addressId, items) {
       res.status(400);
       throw new Error("One of the items in your bag is no longer available.");
     }
-    const qty = Math.min(10, Math.max(1, Number(i.qty) || 1));
-    return { product: p._id, name: p.name, size: String(i.size || ""), qty, price: p.price };
+    const size = typeof i.size === "string" ? i.size : "";
+    if (p.sizes.length && !p.sizes.includes(size)) {
+      res.status(400);
+      throw new Error(`Size ${size || "(none)"} is no longer available for ${p.name}. Please update your bag.`);
+    }
+    const qty = Math.min(10, Math.max(1, Math.trunc(Number(i.qty)) || 1));
+    return { product: p._id, name: p.name, size, qty, price: p.price };
   });
 
   const total = orderItems.reduce((sum, i) => sum + i.price * i.qty, 0);
@@ -43,26 +68,12 @@ async function prepareOrder(res, userId, addressId, items) {
 }
 
 async function reserveStock(items, res) {
-  const reserved = [];
-  for (const item of items) {
-    const { modifiedCount } = await Product.updateOne(
-      { _id: item.product, stock: { $gte: item.qty } },
-      { $inc: { stock: -item.qty } }
-    );
-    if (!modifiedCount) {
-      await Promise.all(reserved.map((reservedItem) =>
-        Product.updateOne({ _id: reservedItem.product }, { $inc: { stock: reservedItem.qty } })
-      ));
-      res.status(400);
-      throw new Error(`${item.name} doesn't have enough stock for your order.`);
-    }
-    reserved.push(item);
+  const result = await tryReserveStock(items);
+  if (!result.ok) {
+    res.status(400);
+    throw new Error(`${result.item.name} doesn't have enough stock for your order.`);
   }
-  return reserved;
-}
-
-async function releaseStock(items) {
-  await Promise.all(items.map((item) => Product.updateOne({ _id: item.product }, { $inc: { stock: item.qty } })));
+  return result.reserved;
 }
 
 export async function createOrder(req, res) {
@@ -82,24 +93,34 @@ export async function createOrder(req, res) {
   }
 }
 
-export async function createRazorpayOrder(req, res) {
+function requireRazorpay(res) {
   if (!env.razorpayEnabled || !razorpay) {
     res.status(404);
     throw new Error("Online payments are not enabled.");
   }
+}
+
+export async function createRazorpayOrder(req, res) {
+  requireRazorpay(res);
   const { addressId, items } = req.body || {};
   const { account, customer, orderItems, total } = await prepareOrder(res, req.user.id, addressId, items);
-  const amount = Math.round(total * 100);
-  if (amount <= 0) {
+  const amount = toPaise(total);
+  if (!Number.isSafeInteger(amount) || amount < 100) {
     res.status(400);
     throw new Error("This order cannot be paid online.");
   }
 
-  const gatewayOrder = await razorpay.orders.create({
-    amount,
-    currency: "INR",
-    receipt: `dy_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`,
-  });
+  let gatewayOrder;
+  try {
+    gatewayOrder = await razorpay.orders.create({
+      amount,
+      currency: "INR",
+      receipt: `dy_${Date.now()}_${randomBytes(5).toString("hex")}`,
+      notes: { app: "dreamyard", user: String(account._id) },
+    });
+  } catch (error) {
+    throw toHttpError(res, gatewayError(error, "order create"));
+  }
   await PaymentAttempt.create({
     user: account._id,
     customer,
@@ -115,6 +136,7 @@ export async function createRazorpayOrder(req, res) {
   });
 }
 
+// Checks the signature Razorpay Checkout hands to the browser (HMAC of "order_id|payment_id" with the key secret).
 function hasValidSignature(orderId, paymentId, signature) {
   if (typeof signature !== "string" || !/^[a-f\d]{64}$/i.test(signature)) return false;
   const expected = createHmac("sha256", env.razorpayKeySecret)
@@ -124,13 +146,43 @@ function hasValidSignature(orderId, paymentId, signature) {
   return expected.length === received.length && timingSafeEqual(expected, received);
 }
 
-export async function verifyRazorpayPayment(req, res) {
-  if (!env.razorpayEnabled || !razorpay) {
-    res.status(404);
-    throw new Error("Online payments are not enabled.");
+const refundNote = (reason) => `${reason}. Your payment has been refunded and should reach your account within 5-7 working days.`;
+const releaseNote = (reason) => `${reason}. You have not been charged; any amount held on your card or bank will be released automatically within a few days.`;
+
+function sendOutcome(res, result) {
+  switch (result.outcome) {
+    case "completed":
+      if (!result.order) {
+        res.status(409);
+        throw new Error("This payment has already been processed. Check your orders.");
+      }
+      return res.status(result.created ? 201 : 200).json(orderSummary(result.order));
+    case "refunded":
+      res.status(409);
+      throw new Error(refundNote(result.reason || "We could not fulfil your order"));
+    case "released":
+      res.status(409);
+      throw new Error(releaseNote(result.reason || "We could not fulfil your order"));
+    case "in_progress":
+      res.status(409);
+      throw new Error("Your payment is still being confirmed. Check your orders in a minute before paying again.");
+    case "not_paid":
+      res.status(400);
+      throw new Error("Payment was not successful. No order was placed.");
+    default:
+      res.status(400);
+      throw new Error("Payment details did not match this checkout. No order was placed.");
   }
+}
+
+export async function verifyRazorpayPayment(req, res) {
+  requireRazorpay(res);
   const { razorpayOrderId, razorpayPaymentId, razorpaySignature } = req.body || {};
-  if (!razorpayOrderId || !razorpayPaymentId || !hasValidSignature(razorpayOrderId, razorpayPaymentId, razorpaySignature)) {
+  if (
+    !isGatewayId("order", razorpayOrderId)
+    || !isGatewayId("pay", razorpayPaymentId)
+    || !hasValidSignature(razorpayOrderId, razorpayPaymentId, razorpaySignature)
+  ) {
     res.status(400);
     throw new Error("Payment could not be verified. No order was placed.");
   }
@@ -140,75 +192,43 @@ export async function verifyRazorpayPayment(req, res) {
     res.status(400);
     throw new Error("This payment does not match an active checkout.");
   }
-  const existingOrder = await Order.findOne({ razorpayPaymentId });
-  if (existingOrder) {
-    attempt.status = "completed";
-    attempt.completedOrder = existingOrder._id;
-    await attempt.save();
-    return res.json({ _id: existingOrder._id, total: existingOrder.total, customer: { name: existingOrder.customer.name } });
-  }
-  if (attempt.status === "completed") {
-    const order = await Order.findById(attempt.completedOrder);
-    if (order) return res.json({ _id: order._id, total: order.total, customer: { name: order.customer.name } });
-  }
 
-  const payment = await razorpay.payments.fetch(razorpayPaymentId);
-  if (
-    payment.order_id !== razorpayOrderId
-    || payment.amount !== Math.round(attempt.total * 100)
-    || payment.currency !== "INR"
-  ) {
-    res.status(400);
-    throw new Error("Payment details did not match this checkout. No order was placed.");
-  }
-  if (!["authorized", "captured"].includes(payment.status)) {
-    res.status(400);
-    throw new Error("Payment was not successful. No order was placed.");
-  }
-
-  const claimedAttempt = await PaymentAttempt.findOneAndUpdate(
-    { _id: attempt._id, status: "pending" },
-    { $set: { status: "processing" } },
-    { new: true }
-  );
-  if (!claimedAttempt) {
-    res.status(409);
-    throw new Error("This payment is already being finalized. Please retry in a moment.");
-  }
-
-  let reserved = [];
-  let order;
   try {
-    reserved = await reserveStock(attempt.items);
-    const capturedPayment = payment.status === "authorized"
-      ? await razorpay.payments.capture(payment.id, payment.amount, payment.currency)
-      : payment;
-    if (capturedPayment.status !== "captured") throw new Error("Payment capture did not complete. Please try again.");
-
-    order = await Order.create({
-      user: attempt.user,
-      customer: attempt.customer,
-      items: attempt.items,
-      total: attempt.total,
-      paymentMethod: "razorpay",
-      razorpayOrderId,
-      razorpayPaymentId,
-      razorpaySignature,
-      razorpayMethod: capturedPayment.method,
-      paymentAmount: capturedPayment.amount,
-      paymentCurrency: capturedPayment.currency,
-    });
-    attempt.status = "completed";
-    attempt.completedOrder = order._id;
-    await attempt.save();
+    const payment = await fetchPayment(razorpayPaymentId);
+    let result = await finalizePayment(attempt._id, payment, { signature: razorpaySignature, source: "browser verify" });
+    if (result.outcome === "in_progress") result = await waitForSettlement(attempt._id);
+    return sendOutcome(res, result);
   } catch (error) {
-    if (reserved.length && !order) await releaseStock(reserved);
-    if (!order) {
-      attempt.status = "pending";
-      await attempt.save();
-    }
-    throw error;
+    if (res.statusCode >= 400 && res.statusCode !== 502) throw error;
+    throw toHttpError(res, error);
+  }
+}
+
+// Lets the browser find out what happened to a checkout even if the verify call never completed.
+export async function razorpayPaymentStatus(req, res) {
+  requireRazorpay(res);
+  const { razorpayOrderId } = req.params;
+  if (!isGatewayId("order", razorpayOrderId)) {
+    res.status(400);
+    throw new Error("That payment reference is not valid.");
+  }
+  const attempt = await PaymentAttempt.findOne({ razorpayOrderId, user: req.user.id });
+  if (!attempt) {
+    res.status(404);
+    throw new Error("No checkout found for this payment.");
   }
 
-  res.status(201).json({ _id: order._id, total: order.total, customer: { name: order.customer.name } });
+  let result = await readSettlement(attempt);
+  if (!result) {
+    try {
+      result = await syncAttempt(attempt, "status check");
+    } catch {
+      result = { outcome: "in_progress" };
+    }
+  }
+
+  if (result.outcome === "completed" && result.order) return res.json({ status: "completed", order: orderSummary(result.order) });
+  if (result.outcome === "refunded") return res.json({ status: "refunded", message: refundNote(result.reason || "We could not fulfil your order") });
+  if (result.outcome === "released") return res.json({ status: "released", message: releaseNote(result.reason || "We could not fulfil your order") });
+  res.json({ status: "pending" });
 }

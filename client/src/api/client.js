@@ -17,7 +17,11 @@ async function request(path, options = {}, token) {
     throw new Error("Can't reach the store server. Check that it is running.");
   }
   const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data.message || "Something went wrong. Try again.");
+  if (!res.ok) {
+    const error = new Error(data.message || "Something went wrong. Try again.");
+    error.status = res.status;
+    throw error;
+  }
   return data;
 }
 
@@ -44,6 +48,7 @@ export const api = {
   createOrder: (body, token) => request("/orders", { method: "POST", body: JSON.stringify(body) }, token),
   createPaymentOrder: (body, token) => request("/orders/razorpay/order", { method: "POST", body: JSON.stringify(body) }, token),
   verifyPayment: (body, token) => request("/orders/razorpay/verify", { method: "POST", body: JSON.stringify(body) }, token),
+  paymentStatus: (razorpayOrderId, token) => request(`/orders/razorpay/status/${encodeURIComponent(razorpayOrderId)}`, {}, token),
 };
 
 export const rupees = (n) => `₹${Number(n).toLocaleString("en-IN")}`;

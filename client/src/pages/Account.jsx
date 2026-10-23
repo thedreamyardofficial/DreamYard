@@ -8,6 +8,7 @@ import TrackingDetails from "../components/TrackingDetails.jsx";
 const EMPTY_ADDRESS = { name: "", email: "", phone: "", address: "", city: "", pincode: "" };
 const ORDER_STAGES = ["placed", "shipped", "delivered"];
 const TRACKING_REFRESH_INTERVAL_MS = 3 * 60 * 1000;
+const paiseToText = (paise) => (Number(paise) / 100).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const ADDRESS_FIELDS = [
   ["name", "Recipient name", "text", "name"],
   ["email", "Recipient email", "email", "email"],
@@ -320,6 +321,12 @@ export default function Account() {
                   )}
                   <strong>{rupees(order.total)}</strong>
                 </div>
+                {order.paymentMethod === "razorpay" && ["refunded", "partially_refunded"].includes(order.paymentStatus) && (
+                  <p className="notice" role="status">
+                    {order.paymentStatus === "refunded" ? "Payment refunded" : "Partially refunded"}
+                    {order.refundedAmount > 0 && `: ${order.paymentCurrency || "INR"} ${paiseToText(order.refundedAmount)}`}
+                  </p>
+                )}
                 {order.trackingVisibleToCustomer !== false && (
                   <section className="order-item__tracking" aria-label={`Tracking details for order ${order._id.slice(-6)}`}>
                     <h3>Shipment tracking</h3>

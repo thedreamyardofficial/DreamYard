@@ -2,13 +2,16 @@ import { env } from "./config/env.js";
 import mongoose from "mongoose";
 import app from "./app.js";
 import { connectDB } from "./config/db.js";
+import { startPaymentReconciler } from "./utils/payments.js";
 
 async function start() {
   await connectDB(env.mongoUri);
   const server = app.listen(env.port, () => console.log(`API listening on http://localhost:${env.port}`));
+  const stopPaymentReconciler = startPaymentReconciler();
 
   const shutdown = (signal) => {
     console.log(`${signal} received, shutting down`);
+    stopPaymentReconciler();
     server.close(async () => {
       await mongoose.disconnect();
       process.exit(0);

@@ -50,7 +50,7 @@ export async function details(req, res) {
     : [];
   const productsById = new Map(cartProducts.map((product) => [String(product._id), product]));
   const orders = await Order.find({ user: user._id })
-    .select("customer items total status cancellationReason tracking trackingVisibleToCustomer paymentMethod paymentAmount paymentCurrency razorpayMethod razorpayOrderId razorpayPaymentId createdAt updatedAt")
+    .select("customer items total status cancellationReason tracking trackingVisibleToCustomer paymentMethod paymentAmount paymentCurrency paymentStatus refundedAmount razorpayMethod razorpayOrderId razorpayPaymentId createdAt updatedAt")
     .sort({ createdAt: -1 })
     .lean();
 
